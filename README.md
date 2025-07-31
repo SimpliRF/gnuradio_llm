@@ -16,16 +16,16 @@ provides a pipeline for quickly adding examples and re-tune the model using LoRa
 ```
 Copyright (c) 2025 SimpliRF, LLC.
 
-cdsp is free software: you can redistribute it and/or modify
+GNU Radio LLM is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-cdsp is distributed in the hope that it will be useful,
+GNU Radio LLM is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with cdsp.  If not, see <https://www.gnu.org/licenses/>.
+along with GNU Radio LLM.  If not, see <https://www.gnu.org/licenses/>.
 ```

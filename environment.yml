@@ -1,0 +1,10 @@
+name: gnuradio-llm
+channels:
+  - conda-forge
+dependencies:
+  - gnuradio
+  - pyqt
+  - numpy
+  - pip
+  - pip:
+      - -r requirements.txt
