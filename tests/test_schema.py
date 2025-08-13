@@ -4,7 +4,7 @@
 
 import pytest
 
-from flowgraph.schema import FlowGraph
+from flowgraph.schema import Flowgraph
 
 
 def test_flowgraph_validation():
@@ -33,7 +33,7 @@ def test_flowgraph_validation():
         "meta_info": {"description": "A test flowgraph", "tags": ["test"]}
     }
 
-    flowgraph = FlowGraph(**graph)
+    flowgraph = Flowgraph(**graph)
     assert flowgraph.name == "Test Graph"
     assert len(flowgraph.blocks) == 2
 
@@ -66,6 +66,6 @@ def test_flowgraph_missing_parameters():
     }
 
     with pytest.raises(Exception) as e:
-        FlowGraph(**graph)
+        Flowgraph(**graph)
 
         assert "missing" in str(e.value), "Expected validation error for missing parameters"

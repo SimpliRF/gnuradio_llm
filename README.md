@@ -12,6 +12,18 @@ provides a pipeline for quickly adding examples and re-tune the model using LoRa
 
 ## Building (Linux)
 
+First, download the [conda-forge](https://conda-forge.org/download/)
+installer and then install it using:
+```
+bash Miniforge3-$(uname)-$(uname -m).sh
+```
+
+From the root of the repository, run the following commands:
+```
+conda env create -f environment.yml
+conda activate gnuradio-llm
+```
+
 ## GPL License
 ```
 Copyright (c) 2025 SimpliRF, LLC.

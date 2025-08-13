@@ -34,7 +34,7 @@ class MetaInfo(BaseModel):
     tags: List[str] = Field(default_factory=list)
 
 
-class FlowGraph(BaseModel):
+class Flowgraph(BaseModel):
     """
     Represents a flowgraph containing multiple blocks.
     """
@@ -50,7 +50,7 @@ class FlowGraphAction(BaseModel):
     Represents an action to be performed on a flowgraph.
     """
     action: str
-    flowgraph: FlowGraph
+    flowgraph: Flowgraph
     block_id: Optional[str] = None
     parameter: Optional[str] = None
     value: Optional[float | int | str | bool] = None
