@@ -6,7 +6,7 @@ import importlib
 import inspect
 import pkgutil
 
-from typing import Type, Dict
+from typing import Any, Dict
 from gnuradio import gr
 from flowgraph.schema import Flowgraph, Block
 
@@ -19,27 +19,65 @@ BLOCK_MODULES = [
 ]
 
 
+BLOCK_BASE_CLASSES = (
+    gr.basic_block,
+    gr.sync_block,
+    gr.decim_block,
+    gr.interp_block,
+    gr.hier_block2
+)
+
+
 class FlowgraphRunner:
     def __init__(self, flowgraph: Flowgraph):
         self.flowgraph = flowgraph
         self.tb = gr.top_block()
-        self.blocks: Dict[str, gr.basic_block] = {}
+        self.blocks: Dict[str, Any] = {}
         self.block_registry = self._build_block_registry()
 
-    def _build_block_registry(self) -> Dict[str, Type[gr.basic_block]]:
+    @staticmethod
+    def _is_gr_block(obj: Any) -> bool:
+        try:
+            if isinstance(obj, BLOCK_BASE_CLASSES):
+                return True
+        except:
+            pass
+
+        if inspect.isclass(obj):
+            return all(
+                callable(getattr(obj, name, None))
+                for name in ('input_signature', 'output_signature')
+            )
+        return False
+
+    def _build_block_registry(self) -> Dict[str, Any]:
         registry = {}
         for module_name in BLOCK_MODULES:
-            module = importlib.import_module(module_name)
-            for name, obj in inspect.getmembers(module):
-                if (
-                    inspect.isclass(obj)
-                    and issubclass(obj, gr.basic_block)
-                    and callable(obj)
-                ):
-                    registry[name] = obj
+            root = importlib.import_module(module_name)
+
+            for _, mod_name, _ in pkgutil.walk_packages(
+                root.__path__, prefix=root.__name__ + '.'
+            ):
+                try:
+                    module = importlib.import_module(mod_name)
+                    for name, obj in inspect.getmembers(module):
+                        if not inspect.isclass(obj):
+                            continue
+
+                        is_block = False
+                        if (issubclass(obj, BLOCK_BASE_CLASSES)
+                            and obj not in BLOCK_BASE_CLASSES
+                            or self._is_gr_block(obj)
+                        ):
+                            is_block = True
+
+                        if is_block:
+                            registry[name] = obj
+                except Exception as e:
+                    print(f'Error loading module {mod_name}: {e}')
         return registry
 
-    def _create_block(self, block: Block) -> gr.basic_block:
+    def _create_block(self, block: Block) -> Any:
         if block.type not in self.block_registry:
             raise ValueError(f'Unknown block type: {block.type}')
 

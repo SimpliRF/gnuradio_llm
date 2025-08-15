@@ -13,7 +13,7 @@ class Block(BaseModel):
     id: str
     name: str
     type: str
-    parameters: Dict[str, str] = Field(default_factory=dict)
+    parameters: Dict[str, float | int | str | bool] = Field(default_factory=dict)
     inputs: List[str] = Field(default_factory=list)
     outputs: List[str] = Field(default_factory=list)
 

@@ -10,6 +10,48 @@ from flowgraph.runner import FlowgraphRunner
 
 def test_runner_from_valid_json():
     json_data = '''
+    {
+        "name": "Test Graph",
+        "blocks": [
+            {
+                "id": "src",
+                "name": "Signal Source",
+                "type": "sig_source_f",
+                "parameters": {
+                    "sampling_freq": 32000,
+                    "frequency": 1000,
+                    "amplitude": 1.0,
+                    "waveform": 0
+                },
+                "inputs": [],
+                "outputs": ["out"]
+            },
+            {
+                "id": "throttle",
+                "name": "Throttle",
+                "type": "throttle",
+                "parameters": {
+                    "sample_rate": 32000
+                },
+                "inputs": ["in"],
+                "outputs": ["out"]
+            },
+            {
+                "id": "sink",
+                "name": "Null Sink",
+                "type": "null_sink",
+                "parameters": {},
+                "inputs": ["in"],
+                "outputs": []
+            }
+        ],
+        "connections": [
+            {"from": "src:out", "to": "throttle:in"},
+            {"from": "throttle:out", "to": "sink:in"}
+        ],
+        "gui_config": {"enabled": false},
+        "meta_info": {"description": "A test flowgraph", "tags": ["test"]}
+    }
     '''
 
     graph = FlowgraphBuilder.from_json(json_data)
