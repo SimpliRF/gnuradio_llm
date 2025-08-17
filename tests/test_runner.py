@@ -18,9 +18,9 @@ def test_runner_from_valid_json():
                 "name": "Signal Source",
                 "type": "sig_source_f",
                 "parameters": {
-                    "sampling_freq": 32000,
-                    "frequency": 1000,
-                    "amplitude": 1.0,
+                    "sampling_freq": 32000.0,
+                    "wave_freq": 1000.0,
+                    "ampl": 1.0,
                     "waveform": 0
                 },
                 "inputs": [],
@@ -31,7 +31,8 @@ def test_runner_from_valid_json():
                 "name": "Throttle",
                 "type": "throttle",
                 "parameters": {
-                    "sample_rate": 32000
+                    "itemsize": 4,
+                    "samples_per_sec": 32000.0
                 },
                 "inputs": ["in"],
                 "outputs": ["out"]
@@ -40,7 +41,9 @@ def test_runner_from_valid_json():
                 "id": "sink",
                 "name": "Null Sink",
                 "type": "null_sink",
-                "parameters": {},
+                "parameters": {
+                    "sizeof_stream_item": 4
+                },
                 "inputs": ["in"],
                 "outputs": []
             }
