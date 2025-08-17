@@ -7,6 +7,7 @@ import inspect
 import pkgutil
 
 from typing import Any, Dict
+from rich.console import Console
 from gnuradio import gr
 from flowgraph.schema import Flowgraph, Block
 
@@ -29,8 +30,9 @@ BLOCK_BASE_CLASSES = (
 
 
 class FlowgraphRunner:
-    def __init__(self, flowgraph: Flowgraph):
+    def __init__(self, flowgraph: Flowgraph, console: Console):
         self.flowgraph = flowgraph
+        self.console = console
         self.tb = gr.top_block()
         self.blocks: Dict[str, Any] = {}
         self.block_registry = self._build_block_registry()
@@ -74,7 +76,7 @@ class FlowgraphRunner:
                         if is_block:
                             registry[name] = obj
                 except Exception as e:
-                    print(f'Error loading module {mod_name}: {e}')
+                    self.console.print(f'Error loading module {mod_name}: {e}')
         return registry
 
     def _create_block(self, block: Block) -> Any:
@@ -98,16 +100,20 @@ class FlowgraphRunner:
             dst_block = self.blocks.get(dst_id)
             self.tb.connect(src_block, dst_block)
 
+    def start(self):
+        self.console.print('▶️  Starting flowgraph...')
+        self.tb.start()
+
     def run(self):
-        print('🔧  Building flowgraph...')
+        self.console.print('🔧  Building flowgraph...')
         self._build()
 
-        print('🔁  Running flowgraph...')
+        self.console.print('🔁  Running flowgraph...')
         try:
             self.tb.run()
         except Exception as e:
-            print(f'Error running flowgraph: {e}')
+            self.console.print(f'Error running flowgraph: {e}')
 
     def stop(self):
-        print('⏹️  Stopping flowgraph...')
+        self.console.print('⏹️  Stopping flowgraph...')
         self.tb.stop()
