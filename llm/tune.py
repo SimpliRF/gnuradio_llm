@@ -9,12 +9,13 @@ import base64
 
 from typing import Any
 
+from llm.prompts import load_dataset
+
 from peft import LoraConfig
 from peft.mapping import get_peft_model
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers.utils.quantization_config import BitsAndBytesConfig
 from trl import SFTTrainer, SFTConfig
-from datasets import Dataset
 
 
 class ModelTrainer:
@@ -62,30 +63,11 @@ class ModelTrainer:
         )
         return get_peft_model(self.model, self.peft_config)
 
-    def _load_dataset(self) -> Dataset:
-        samples = []
-        for file in os.listdir(self.dataset_dir):
-            if file.endswith('.json'):
-                with open(os.path.join(self.dataset_dir, file), 'r') as fp:
-                    data = json.load(fp)
-                    completion = base64.b64decode(data['completion'])
-                    completion = json.loads(completion)
-                    samples.append({
-                        'prompt': data['prompt'],
-                        'completion': json.dumps(completion, indent=2)
-                    })
-        dataset = Dataset.from_list(samples)
-        def format_example(example):
-            return {'text': f'{example['prompt']}\n{example['completion']}'}
-
-        return dataset.map(format_example)
-
     def train(self, learning_rate: float = 2e-4, num_train_epochs: int = 3):
         if self.model is None or self.peft_config is None:
             raise RuntimeError("Model and config must be loaded before training.")
 
-        dataset = self._load_dataset()
-
+        dataset = load_dataset(self.tokenizer, self.dataset_dir)
         config = SFTConfig(
             output_dir=self.output_dir,
             per_device_train_batch_size=2,

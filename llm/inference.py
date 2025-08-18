@@ -54,7 +54,6 @@ class ModelEngine:
                 torch_dtype=torch.float32,
                 low_cpu_mem_usage=True
             )
-
         self.model.config.use_cache = True
         self.model.eval()
 
