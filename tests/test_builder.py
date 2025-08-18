@@ -72,5 +72,4 @@ def test_builder_from_invalid_json():
 
     with pytest.raises(Exception) as e:
         FlowgraphBuilder.from_json(json_data)
-
         assert "missing" in str(e.value), "Expected validation error for missing parameters"

@@ -13,7 +13,7 @@ from transformers.utils.quantization_config import BitsAndBytesConfig
 
 
 class ModelEngine:
-    def __init__(self, model_name: str = 'mistral-7b-instruct'):
+    def __init__(self, model_name: str = 'TheBloke/Mistral-7B-Instruct-v0.1-GPTQ'):
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.config = BitsAndBytesConfig(
             load_in_4bit=True,
@@ -24,19 +24,26 @@ class ModelEngine:
         self.model = AutoModelForCausalLM.from_pretrained(
             model_name,
             device_map='auto',
-            quantization_config=self.config
+            quantization_config=self.config,
+            trust_remote_code=True
         )
+        self.model.eval()
         self.streamer = TextStreamer(self.tokenizer)
 
     def generate(self, user_prompt: str, max_tokens: int = 1024) -> str:
-        prompt = get_system_prompt() + f'User prompt: {user_prompt}' + f'\nAssistant response: '
+        prompt = (
+            get_system_prompt() +
+            f'\n\n### User prompt: {user_prompt}' +
+            f'\n\n### Assistant response: '
+        )
         inputs = self.tokenizer(prompt, return_tensors='pt').to(self.model.device)
 
         output = self.model.generate(
             **inputs,
             max_new_tokens=max_tokens,
-            do_sample=True,
-            temperature=0.7,
+            do_sample=False,
+            num_beams=3,
+            early_stopping=True,
             streamer=self.streamer,
         )
 

@@ -5,6 +5,9 @@ GNU Radio flowgraphs. Utilizing Mistral 7B as a foundation model, this project
 provides a pipeline for quickly adding examples and re-tune the model using LoRa
 (Low-Rank Adaption of LLMs).
 
+**NOTE**: This project is not affiliated with or sponsored by any of the
+official GNU Radio organizations.
+
 ## Dependencies
 
 * Python [>=3.12]

@@ -10,10 +10,10 @@ def extract_json_from_text(text: str) -> str:
     """
     Extract JSON content from a text string.
     """
-    m = re.search(r'\{.*\}', text, re.DOTALL)
-    if m:
+    match = re.search(r'\{.*\}', text, re.DOTALL)
+    if match:
         try:
-            data = json.loads(m.group(0))
+            data = json.loads(match.group(0))
             return json.dumps(data, indent=2)
         except json.JSONDecodeError:
             pass
