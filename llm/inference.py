@@ -32,8 +32,8 @@ class ModelEngine:
 
     def generate(self, user_prompt: str, max_tokens: int = 1024) -> str:
         prompt = (
-            get_system_prompt() +
-            f'\n\n### User prompt: {user_prompt}' +
+            get_system_prompt()
+            f'\n\n### User prompt: {user_prompt}'
             f'\n\n### Assistant response: '
         )
         inputs = self.tokenizer(prompt, return_tensors='pt').to(self.model.device)
@@ -49,3 +49,14 @@ class ModelEngine:
 
         decoded = self.tokenizer.decode(output[0], skip_special_tokens=True)
         return extract_json_from_text(decoded)
+
+    def retry_with_feedback(self,
+                            user_prompt: str,
+                            feedback: str,
+                            max_tokens: int = 1024) -> str:
+        retry_prompt = (
+            f'The previous attempt failed with the following feedback:\n{feedback}\n'
+            f'Please try again and produce the correct JSON.\n\n'
+            f'Original user prompt: {user_prompt}\n\n'
+        )
+        return self.generate(retry_prompt, max_tokens=max_tokens)

@@ -45,7 +45,7 @@ class Flowgraph(BaseModel):
     meta_info: MetaInfo = Field(default_factory=MetaInfo)
 
 
-class FlowGraphAction(BaseModel):
+class FlowgraphAction(BaseModel):
     """
     Represents an action to be performed on a flowgraph.
     """

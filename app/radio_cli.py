@@ -12,7 +12,10 @@ from rich.panel import Panel
 
 from prompt_toolkit import prompt
 
+from llm.inference import ModelEngine
 from flowgraph.schema import Flowgraph
+from flowgraph.builder import FlowgraphBuilder
+from flowgraph.controller import FlowgraphController
 
 
 def draw_flowgraph_tree(console: Console, flowgraph: Flowgraph):
@@ -65,6 +68,8 @@ def main_entry():
     console.print('Type a description of a flowgraph you want to build.')
     console.print('Type [bold red]exit[/bold red] or [bold red]Ctrl+C[/bold red] to quit.')
 
+    engine = ModelEngine()
+
     while True:
         try:
             user_input = prompt([('class:prompt', '» ')]).strip()
@@ -79,7 +84,34 @@ def main_entry():
         if not user_input:
             continue
 
-        # TODO: Process user input and send it to the LLM
+        try:
+            flowgraph_json = engine.generate(user_input)
+            console.print('[dim]Generated JSON:[/dim]')
+            console.print_json(flowgraph_json)
+
+            flowgraph = FlowgraphBuilder.from_json(flowgraph_json)
+            console.print('[bold green]Flowgraph successfully built![/bold green]')
+
+            controller = FlowgraphController(console)
+            controller.load_flowgraph(flowgraph)
+            console.print('[bold green]Flowgraph loaded successfully![/bold green]')
+
+            # TODO: How to manage running the flowgraph?
+
+        except Exception as e:
+            console.print(f'[bold red]Error generating flowgraph:[/bold red] {e}')
+            feedback = str(e)
+
+            console.print('[yellow]Providing feedback to the LLM...[/yellow]')
+            try:
+                fixed_json = engine.retry_with_feedback(user_input, feedback)
+                flowgraph = FlowgraphBuilder.from_json(fixed_json)
+                controller.start(flowgraph)
+                console.print('[green]✔ Retry successful![/green]')
+
+                # TODO: How do we manage running the flowgraph concurrently?
+            except Exception as retry_error:
+                console.print(f'[bold red]❌ Retry failed:[/bold red] {retry_e}')
 
     return 0
 
