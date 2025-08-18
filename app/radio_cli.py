@@ -4,6 +4,7 @@
 #
 
 import sys
+import argparse
 
 from rich.console import Console
 from rich.tree import Tree
@@ -12,10 +13,9 @@ from rich.panel import Panel
 
 from prompt_toolkit import prompt
 
-from llm.inference import ModelEngine
 from flowgraph.schema import Flowgraph
-from flowgraph.builder import FlowgraphBuilder
 from flowgraph.controller import FlowgraphController
+from llm.inference import ModelEngine
 
 
 def draw_flowgraph_tree(console: Console, flowgraph: Flowgraph):
@@ -69,6 +69,8 @@ def main_entry():
     console.print('Type [bold red]exit[/bold red] or [bold red]Ctrl+C[/bold red] to quit.')
 
     engine = ModelEngine()
+    controller = FlowgraphController(console)
+    max_attempts = 3
 
     while True:
         try:
@@ -84,34 +86,41 @@ def main_entry():
         if not user_input:
             continue
 
-        try:
-            flowgraph_json = engine.generate(user_input)
-            console.print('[dim]Generated JSON:[/dim]')
-            console.print_json(flowgraph_json)
-
-            flowgraph = FlowgraphBuilder.from_json(flowgraph_json)
-            console.print('[bold green]Flowgraph successfully built![/bold green]')
-
-            controller = FlowgraphController(console)
-            controller.load_flowgraph(flowgraph)
-            console.print('[bold green]Flowgraph loaded successfully![/bold green]')
-
-            # TODO: How to manage running the flowgraph?
-
-        except Exception as e:
-            console.print(f'[bold red]Error generating flowgraph:[/bold red] {e}')
-            feedback = str(e)
-
-            console.print('[yellow]Providing feedback to the LLM...[/yellow]')
+        response = engine.generate(user_input)
+        for attempt in range(max_attempts):
             try:
-                fixed_json = engine.retry_with_feedback(user_input, feedback)
-                flowgraph = FlowgraphBuilder.from_json(fixed_json)
-                controller.start(flowgraph)
-                console.print('[green]✔ Retry successful![/green]')
+                # Try to parse the output as a flowgraph
+                try:
+                    flowgraph = Flowgraph.model_validate_json(response)
 
-                # TODO: How do we manage running the flowgraph concurrently?
-            except Exception as retry_error:
-                console.print(f'[bold red]❌ Retry failed:[/bold red] {retry_e}')
+                    console.print('[bold green]✔ Flowgraph successfully built![/bold green]')
+                    console.print('[dim]Generated JSON:[/dim]')
+                    console.print_json(response)
+
+                    controller.load_flowgraph(flowgraph)
+                    draw_flowgraph_tree(console, flowgraph)
+                    break
+                except ValidationError:
+                    console.print('[bold red]Must not be a flowgraph JSON[/bold red]')
+
+                # Try to parse the output as a flowgraph action
+                try:
+                    action = FlowgraphAction.model_validate_json(response)
+                    controller.handle_action(action)
+                    console.print('[green]✔ Action executed[/green]')
+                    break
+                except ValidationError:
+                    console.print(f'[bold red]Must not be a flowgraph action[/bold red]')
+
+                raise ValueError('Invalid response fromat from LLM...')
+
+            except Exception as e:
+                console.print(f'[bold red]❌ Error processing response:[/bold red] {e}')
+                if attempt < max_attempts - 1:
+                    console.print('[yellow]Retrying with feedback...[/yellow]')
+                    response = engine.retry_with_feedback(user_input, str(e))
+                else:
+                    console.print('[bold red]❌ Max attempts reached. Exiting...[/bold red]')
 
     return 0
 

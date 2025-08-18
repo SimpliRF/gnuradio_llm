@@ -6,7 +6,7 @@ import pytest
 
 from rich.console import Console
 
-from flowgraph.builder import FlowgraphBuilder
+from flowgraph.schema import Flowgraph
 from flowgraph.runner import FlowgraphRunner
 
 
@@ -61,7 +61,7 @@ def test_runner_from_valid_json():
 
     console = Console()
 
-    graph = FlowgraphBuilder.from_json(json_data)
+    graph = Flowgraph.model_validate_json(json_data)
     runner = FlowgraphRunner(graph, console)
     runner._build()
 

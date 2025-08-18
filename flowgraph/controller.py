@@ -7,7 +7,7 @@ import time
 from typing import Optional
 from rich.console import Console
 from flowgraph.runner import FlowgraphRunner
-from flowgraph.schema import Flowgraph
+from flowgraph.schema import Flowgraph, FlowgraphAction
 
 
 class FlowgraphController:
@@ -58,3 +58,14 @@ class FlowgraphController:
         self.state = 'idle'
         self.start_time = None
         self.console.print('Flowgraph reset')
+
+    def handle_action(self, action: FlowgraphAction):
+        if action.action == 'start':
+            self.start()
+        elif action.action == 'stop':
+            self.stop()
+        elif action.action == 'set':
+            if action.block_id and action.parameter:
+                pass
+        else:
+            raise ValueError(f'Unsupported action: {action.action}')
