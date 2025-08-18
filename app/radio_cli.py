@@ -13,7 +13,9 @@ from rich.panel import Panel
 
 from prompt_toolkit import prompt
 
-from flowgraph.schema import Flowgraph
+from pydantic import ValidationError
+
+from flowgraph.schema import Flowgraph, FlowgraphAction
 from flowgraph.controller import FlowgraphController
 from llm.inference import ModelEngine
 
@@ -87,6 +89,8 @@ def main_entry():
             continue
 
         response = engine.generate(user_input)
+        console.print(f'[bold blue]LLM Response:[/bold blue]\n{response}')
+
         for attempt in range(max_attempts):
             try:
                 # Try to parse the output as a flowgraph
@@ -119,8 +123,9 @@ def main_entry():
                 if attempt < max_attempts - 1:
                     console.print('[yellow]Retrying with feedback...[/yellow]')
                     response = engine.retry_with_feedback(user_input, str(e))
+                    console.print(f'[bold blue]LLM Response:[/bold blue]\n{response}')
                 else:
-                    console.print('[bold red]❌ Max attempts reached. Exiting...[/bold red]')
+                    console.print('[bold red]❌ Max attempts reached...[/bold red]')
 
     return 0
 

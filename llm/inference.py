@@ -2,51 +2,103 @@
 # This file is part of the GNU Radio LLM project.
 #
 
+import os
 import torch
 
 from llm.prompts import get_system_prompt
 from llm.utils import extract_json_from_text
 
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from transformers.generation.streamers import TextStreamer
 from transformers.utils.quantization_config import BitsAndBytesConfig
 
 
 class ModelEngine:
-    def __init__(self, model_name: str = 'TheBloke/Mistral-7B-Instruct-v0.1-GPTQ'):
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_use_double_quant=True,
-            bnb_4bit_compute_dtype=torch.float16,
-            bnb_4bit_quant_type='nf4'
-        )
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            device_map='auto',
-            quantization_config=self.config,
-            trust_remote_code=True
-        )
+    def __init__(self,
+                 model_name: str = 'mistralai/Mistral-7B-Instruct-v0.2',
+                 fallback_model_name: str = 'Qwen/Qwen2.5-0.5B-Instruct',
+                 hf_token_env: str = 'HUGGINGFACE_HUB_TOKEN'):
+        self.model_name = model_name
+        self.fallback_model_name = fallback_model_name
+        self.hf_token = os.environ.get(hf_token_env, None)
+
+        self.tokenizer = None
+        self.model = None
+
+        self._load_model()
+
+    def _load_model(self):
+        if torch.cuda.is_available():
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                self.model_name,
+                use_fast=True
+            )
+            self.config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_use_double_quant=True,
+                bnb_4bit_compute_dtype=torch.float16,
+                bnb_4bit_quant_type='nf4'
+            )
+            self.model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                device_map='auto',
+                quantization_config=self.config
+            )
+        else:
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                self.fallback_model_name,
+                use_fast=True
+            )
+            self.model = AutoModelForCausalLM.from_pretrained(
+                self.fallback_model_name,
+                device_map='auto',
+                torch_dtype=torch.float32,
+                low_cpu_mem_usage=True
+            )
+
+        self.model.config.use_cache = True
         self.model.eval()
-        self.streamer = TextStreamer(self.tokenizer)
+
+    def _get_prompt(self, user_prompt: str) -> str:
+        if not self.tokenizer:
+            raise RuntimeError('Tokenizer must be loaded before generating prompts.')
+        if hasattr(self.tokenizer, 'apply_chat_template'):
+            messages = [
+                {'role': 'system',
+                 'content': 'You are a helpful assistant. Return exactly ONE JSON object.'},
+                {'role': 'user', 'content': user_prompt}
+            ]
+            prompt = self.tokenizer.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True
+            )
+            return prompt
+        else:
+            prompt = (
+                get_system_prompt() +
+                f'\n\n### Prompt: {user_prompt}' +
+                f'\n\n### Completion: '
+            )
+            return prompt
 
     def generate(self, user_prompt: str, max_tokens: int = 1024) -> str:
-        prompt = (
-            get_system_prompt()
-            f'\n\n### User prompt: {user_prompt}'
-            f'\n\n### Assistant response: '
-        )
-        inputs = self.tokenizer(prompt, return_tensors='pt').to(self.model.device)
+        if not self.model or not self.tokenizer:
+            raise RuntimeError('Model and tokenizer must be loaded before generation.')
+
+        prompt = self._get_prompt(user_prompt)
+        inputs = self.tokenizer(
+            prompt,
+            return_tensors='pt'
+        ).to(self.model.device)
 
         output = self.model.generate(
             **inputs,
             max_new_tokens=max_tokens,
+            temperature=1.0,
+            top_p=1.0,
+            top_k=None,
             do_sample=False,
             num_beams=3,
-            early_stopping=True,
-            streamer=self.streamer,
+            early_stopping=False,
         )
-
         decoded = self.tokenizer.decode(output[0], skip_special_tokens=True)
         return extract_json_from_text(decoded)
 

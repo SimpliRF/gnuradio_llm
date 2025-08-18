@@ -5,21 +5,21 @@
 import os
 import json
 import torch
+import base64
 
 from typing import Any
 
-from peft import LoraConfig, get_peft_model
+from peft import LoraConfig
+from peft.mapping import get_peft_model
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from transformers.trainer import Trainer
-from transformers.training_args import TrainingArguments
-from transformers.data.data_collator import DataCollatorForLanguageModeling
 from transformers.utils.quantization_config import BitsAndBytesConfig
+from trl import SFTTrainer, SFTConfig
 from datasets import Dataset
 
 
 class ModelTrainer:
     def __init__(self,
-                 model_name: str = 'TheBloke/Mistral-7B-Instruct-v0.1-GPTQ',
+                 model_name: str = 'mistralai/Mistral-7B-Instruct-v0.2',
                  dataset_dir: str = 'data',
                  output_dir: str = 'qlora_data',
                  load_model: bool = True):
@@ -29,6 +29,7 @@ class ModelTrainer:
 
         self.tokenizer = None
         self.model = None
+        self.perft_config = None
         if load_model:
             self.tokenizer = AutoTokenizer.from_pretrained(model_name)
             self.model = self._load_model()
@@ -45,21 +46,21 @@ class ModelTrainer:
             self.model_name,
             device_map='auto',
             quantization_config=config,
-            trust_remote_code=True
+            trust_remote_code=False
         )
         model.config.use_cache = False
         return model
 
     def _apply_lora(self) -> Any:
-        config = LoraConfig(
-            r=8,
+        if self.model is None:
+            raise RuntimeError('Model must be loaded before applying LoRA.')
+        self.peft_config = LoraConfig(
+            r=16,
             lora_alpha=16,
-            target_modules=['q_proj', 'v_proj'],
-            lora_dropout=0.05,
-            bias='none',
-            task_type='CASUAL_LM'
+            task_type='CASUAL_LM',
+            target_modules=['all-linear'],
         )
-        return get_peft_model(self.model, config)
+        return get_peft_model(self.model, self.peft_config)
 
     def _load_dataset(self) -> Dataset:
         samples = []
@@ -67,23 +68,25 @@ class ModelTrainer:
             if file.endswith('.json'):
                 with open(os.path.join(self.dataset_dir, file), 'r') as fp:
                     data = json.load(fp)
+                    completion = base64.b64decode(data['completion'])
+                    completion = json.loads(completion)
                     samples.append({
                         'prompt': data['prompt'],
-                        'response': json.dumps(data['response'], indent=2)
+                        'completion': json.dumps(completion, indent=2)
                     })
         dataset = Dataset.from_list(samples)
         def format_example(example):
-            return {'text': f'{example['prompt']}\n{example['response']}'}
+            return {'text': f'{example['prompt']}\n{example['completion']}'}
 
         return dataset.map(format_example)
 
     def train(self, learning_rate: float = 2e-4, num_train_epochs: int = 3):
-        if self.tokenizer is None or self.model is None:
-            raise RuntimeError("Model and tokenizer must be loaded before training.")
+        if self.model is None or self.peft_config is None:
+            raise RuntimeError("Model and config must be loaded before training.")
 
         dataset = self._load_dataset()
 
-        args = TrainingArguments(
+        config = SFTConfig(
             output_dir=self.output_dir,
             per_device_train_batch_size=2,
             gradient_accumulation_steps=4,
@@ -92,21 +95,13 @@ class ModelTrainer:
             fp16=True,
             logging_steps=10,
             save_steps=100,
-            save_total_limit=2,
-            report_to='none',
-            remove_unused_columns=True
         )
 
-        collator = DataCollatorForLanguageModeling(
-            tokenizer=self.tokenizer,
-            mlm=False
-        )
-
-        trainer = Trainer(
+        trainer = SFTTrainer(
             model=self.model,
-            args=args,
-            data_collator=collator,
-            train_dataset=dataset
+            peft_config=self.peft_config,
+            train_dataset=dataset,
+            args=config,
         )
 
         trainer.train()

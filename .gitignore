@@ -13,4 +13,5 @@ wheels/
 *.png
 *.env
 tags
+condaenv*
 

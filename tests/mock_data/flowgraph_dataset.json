@@ -1,48 +1,4 @@
 {
     "prompt": "generate a null sink flowgraph with a signal source",
-    "response": {
-        "name": "Test Graph",
-        "blocks": [
-            {
-                "id": "src",
-                "name": "Signal Source",
-                "type": "sig_source_f",
-                "parameters": {
-                    "sampling_freq": 32000.0,
-                    "wave_freq": 1000.0,
-                    "ampl": 1.0,
-                    "waveform": 0
-                },
-                "inputs": [],
-                "outputs": ["out"]
-            },
-            {
-                "id": "throttle",
-                "name": "Throttle",
-                "type": "throttle",
-                "parameters": {
-                    "itemsize": 4,
-                    "samples_per_sec": 32000.0
-                },
-                "inputs": ["in"],
-                "outputs": ["out"]
-            },
-            {
-                "id": "sink",
-                "name": "Null Sink",
-                "type": "null_sink",
-                "parameters": {
-                    "sizeof_stream_item": 4
-                },
-                "inputs": ["in"],
-                "outputs": []
-            }
-        ],
-        "connections": [
-            {"from": "src:out", "to": "throttle:in"},
-            {"from": "throttle:out", "to": "sink:in"}
-        ],
-        "gui_config": {"enabled": false},
-        "meta_info": {"description": "A test flowgraph", "tags": ["test"]}
-    }
+    "completion": "ewogICAgIm5hbWUiOiAiVGVzdCBHcmFwaCIsCiAgICAiYmxvY2tzIjogWwogICAgICAgIHsKICAgICAgICAgICAgImlkIjogInNyYyIsCiAgICAgICAgICAgICJuYW1lIjogIlNpZ25hbCBTb3VyY2UiLAogICAgICAgICAgICAidHlwZSI6ICJzaWdfc291cmNlX2YiLAogICAgICAgICAgICAicGFyYW1ldGVycyI6IHsKICAgICAgICAgICAgICAgICJzYW1wbGluZ19mcmVxIjogMzIwMDAuMCwKICAgICAgICAgICAgICAgICJ3YXZlX2ZyZXEiOiAxMDAwLjAsCiAgICAgICAgICAgICAgICAiYW1wbCI6IDEuMCwKICAgICAgICAgICAgICAgICJ3YXZlZm9ybSI6IDAKICAgICAgICAgICAgfSwKICAgICAgICAgICAgImlucHV0cyI6IFtdLAogICAgICAgICAgICAib3V0cHV0cyI6IFsib3V0Il0KICAgICAgICB9LAogICAgICAgIHsKICAgICAgICAgICAgImlkIjogInRocm90dGxlIiwKICAgICAgICAgICAgIm5hbWUiOiAiVGhyb3R0bGUiLAogICAgICAgICAgICAidHlwZSI6ICJ0aHJvdHRsZSIsCiAgICAgICAgICAgICJwYXJhbWV0ZXJzIjogewogICAgICAgICAgICAgICAgIml0ZW1zaXplIjogNCwKICAgICAgICAgICAgICAgICJzYW1wbGVzX3Blcl9zZWMiOiAzMjAwMC4wCiAgICAgICAgICAgIH0sCiAgICAgICAgICAgICJpbnB1dHMiOiBbImluIl0sCiAgICAgICAgICAgICJvdXRwdXRzIjogWyJvdXQiXQogICAgICAgIH0sCiAgICAgICAgewogICAgICAgICAgICAiaWQiOiAic2luayIsCiAgICAgICAgICAgICJuYW1lIjogIk51bGwgU2luayIsCiAgICAgICAgICAgICJ0eXBlIjogIm51bGxfc2luayIsCiAgICAgICAgICAgICJwYXJhbWV0ZXJzIjogewogICAgICAgICAgICAgICAgInNpemVvZl9zdHJlYW1faXRlbSI6IDQKICAgICAgICAgICAgfSwKICAgICAgICAgICAgImlucHV0cyI6IFsiaW4iXSwKICAgICAgICAgICAgIm91dHB1dHMiOiBbXQogICAgICAgIH0KICAgIF0sCiAgICAiY29ubmVjdGlvbnMiOiBbCiAgICAgICAgeyJmcm9tIjogInNyYzpvdXQiLCAidG8iOiAidGhyb3R0bGU6aW4ifSwKICAgICAgICB7ImZyb20iOiAidGhyb3R0bGU6b3V0IiwgInRvIjogInNpbms6aW4ifQogICAgXSwKICAgICJndWlfY29uZmlnIjogeyJlbmFibGVkIjogZmFsc2V9LAogICAgIm1ldGFfaW5mbyI6IHsiZGVzY3JpcHRpb24iOiAiQSB0ZXN0IGZsb3dncmFwaCIsICJ0YWdzIjogWyJ0ZXN0Il19Cn0="
 }
