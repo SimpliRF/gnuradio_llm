@@ -3,6 +3,8 @@
 #
 
 import os
+import random
+
 import torch
 
 from typing import Any
@@ -13,7 +15,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers.utils.quantization_config import BitsAndBytesConfig
 from trl import SFTTrainer, SFTConfig
 
-from llm.prompts import load_dataset
+from llm.prompts import load_dataset, build_prompt
 
 
 class ModelTrainer:
@@ -29,14 +31,24 @@ class ModelTrainer:
         self.output_dir = output_dir
         self.hf_token = os.environ.get(hf_token_env, None)
 
+        self.included_schema = False
         self.model = self._load_model()
 
     def _apply_lora(self, model) -> Any:
         self.peft_config = LoraConfig(
             r=16,
-            lora_alpha=16,
+            lora_alpha=32,
+            lora_dropout=0.0,
             task_type='CASUAL_LM',
-            target_modules=['q_proj', 'v_proj'],
+            target_modules=[
+                'q_proj',
+                'v_proj',
+                'k_proj',
+                'o_proj',
+                'gate_proj',
+                'up_proj',
+                'down_proj',
+            ],
         )
         return get_peft_model(model, self.peft_config)
 
@@ -46,7 +58,6 @@ class ModelTrainer:
                 self.model_name,
                 use_fast=True
             )
-
             config = BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_use_double_quant=True,
@@ -75,36 +86,64 @@ class ModelTrainer:
         model.config.use_cache = False
         return self._apply_lora(model)
 
-    def train(self, learning_rate: float = 2e-4, num_train_epochs: int = 3):
-        dataset = load_dataset(self.tokenizer, self.dataset_dir)
+    @staticmethod
+    def _make_formatting_func(tokenizer):
+        def format_batch(batch):
+            prompts = batch['prompt']
+            completions = batch['completion']
+            include_schema = batch.get('include_schema', [False] * len(prompts))
 
+            texts = []
+
+            zipped = zip(prompts, completions, include_schema)
+            for prompt, completion, schema in zipped:
+                text = build_prompt(
+                    tokenizer,
+                    prompt,
+                    completion,
+                    generation_prompt=False,
+                    include_schema=bool(schema)
+                )
+                texts.append(text)
+            return texts
+        return format_batch
+
+    def train(self, learning_rate: float = 2e-4, num_train_epochs: int = 50):
+        dataset = load_dataset(self.dataset_dir)
         if torch.cuda.is_available():
             config = SFTConfig(
                 output_dir=self.output_dir,
-                max_seq_length=1024,
+                max_seq_length=2048,
                 per_device_train_batch_size=2,
                 gradient_accumulation_steps=4,
                 num_train_epochs=num_train_epochs,
                 learning_rate=learning_rate,
                 fp16=True,
+                lr_scheduler_type='cosine',
+                warmup_ratio=0.0,
+                weight_decay=0.0,
                 logging_steps=10,
                 save_steps=100,
             )
         else:
             config = SFTConfig(
                 output_dir=self.output_dir,
-                max_seq_length=1024,
+                max_seq_length=2048,
                 per_device_train_batch_size=1,
-                gradient_accumulation_steps=2,
+                gradient_accumulation_steps=1,
                 num_train_epochs=num_train_epochs,
                 learning_rate=learning_rate,
                 fp16=False,
+                lr_scheduler_type='cosine',
+                warmup_ratio=0.0,
+                weight_decay=0.0,
                 logging_steps=10,
                 save_steps=100,
             )
 
         trainer = SFTTrainer(
             model=self.model,
+            formatting_func=self._make_formatting_func(self.tokenizer),
             peft_config=self.peft_config,
             train_dataset=dataset,
             args=config,

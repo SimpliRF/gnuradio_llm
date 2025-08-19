@@ -40,12 +40,12 @@ def get_system_prompt(include_schema: bool = False) -> str:
 def build_prompt(tokenizer,
                  user_prompt: str,
                  completion_json: str = '',
+                 include_schema: bool = False,
                  generation_prompt: bool = True) -> str:
     """
     Build a consistent prompt for training or inference.
     """
     completion_json = completion_json.strip()
-    include_schema = not generation_prompt
     if hasattr(tokenizer, 'apply_chat_template'):
         messages = [
             {'role': 'system', 'content': get_system_prompt(include_schema)},
@@ -67,7 +67,7 @@ def build_prompt(tokenizer,
         return f'{system_prompt}\n\n### Prompt: {user_prompt}\n\n### Completion: {completion_json}'
 
 
-def load_dataset(tokenizer, dataset_dir: str) -> Dataset:
+def load_dataset(dataset_dir: str) -> Dataset:
     """
     Load the dataset from the specified directory.
     """
@@ -90,15 +90,8 @@ def load_dataset(tokenizer, dataset_dir: str) -> Dataset:
 
     dataset = Dataset.from_list(samples)
 
-    def map_to_text(text):
-        return {
-            'text': build_prompt(
-                tokenizer,
-                text['prompt'],
-                text['completion'],
-                generation_prompt=False
-            )
-        }
+    def add_schema_flag(sample, index):
+        sample['include_schema'] = (index == 0)
 
-    dataset = dataset.map(map_to_text, remove_columns=['prompt', 'completion'])
+    dataset = dataset.map(add_schema_flag, with_indices=True)
     return dataset

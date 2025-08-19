@@ -70,13 +70,10 @@ def test_build_prompt_with_chat_tokenizer():
 
 
 def test_load_dataset():
-    tokenizer = DummyTokenizer()
-
-    dataset = load_dataset(tokenizer, 'tests/mock_data')
+    dataset = load_dataset('tests/mock_data')
 
     assert len(dataset) >= 1
-    assert 'text' in dataset.column_names
 
-    sample_text = dataset[0]['text']
-    assert '### Prompt:' in sample_text
-    assert '### Completion:' in sample_text
+    sample_text = dataset[0]
+    assert 'prompt' in sample_text
+    assert 'completion' in sample_text
