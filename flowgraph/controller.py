@@ -59,13 +59,30 @@ class FlowgraphController:
         self.start_time = None
         self.console.print('Flowgraph reset')
 
-    def handle_action(self, action: FlowgraphAction):
+    def handle_action(self, action: FlowgraphAction) -> str:
         if action.action == 'start':
             self.start()
+            return 'flowgraph has started'
         elif action.action == 'stop':
             self.stop()
+            return 'flowgraph has stopped'
         elif action.action == 'set':
             if action.block_id and action.parameter:
-                pass
-        else:
-            raise ValueError(f'Unsupported action: {action.action}')
+                # TODO: Set the parameter of a block
+                return 'flowgraph parameter has been set'
+            if action.block_id is None:
+                return 'missing block ID for set action'
+            if action.parameter is None:
+                return 'missing parameter for set action'
+        elif action.action == 'get':
+            if action.block_id and action.parameter:
+                # TODO: Get the parameter of a block
+                value = ''
+                return (f'flowgraph parameter has been retrieved: ' +
+                        f'{action.parameter} = {value}')
+            if action.block_id is None:
+                return 'missing block ID for get action'
+            if action.parameter is None:
+                return 'missing parameter for get action'
+
+        raise ValueError(f'Unsupported action: {action.action}')

@@ -72,8 +72,11 @@ def test_build_prompt_with_chat_tokenizer():
 def test_load_dataset():
     dataset = load_dataset('tests/mock_data')
 
-    assert len(dataset) >= 1
+    assert len(dataset) == 3
+    assert 'history' in dataset[0]
 
-    sample_text = dataset[0]
-    assert 'prompt' in sample_text
-    assert 'completion' in sample_text
+    chain = dataset[0]['history']
+    pair = chain[0]
+    assert 'prompt' in pair
+    assert 'completion' in pair
+

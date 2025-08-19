@@ -14,7 +14,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers.utils.quantization_config import BitsAndBytesConfig
 from trl import SFTTrainer, SFTConfig
 
-from llm.prompts import load_dataset, build_prompt
+from llm.prompts import load_dataset, build_chained_prompt
 
 
 class ModelTrainer:
@@ -88,26 +88,25 @@ class ModelTrainer:
     @staticmethod
     def _make_formatting_func(tokenizer):
         def format_batch(batch):
-            prompts = batch['prompt']
-            completions = batch['completion']
-            include_schema = batch.get('include_schema', [False] * len(prompts))
+            histories = batch['history']
+            schema_flags = batch.get('include_schema', [False] * len(histories))
 
-            texts = []
-
-            zipped = zip(prompts, completions, include_schema)
-            for prompt, completion, schema in zipped:
-                text = build_prompt(
+            prompt_list = []
+            for chain, flag in zip(histories, schema_flags):
+                history_pairs = [
+                    (pair['prompt'], pair['completion']) for pair in chain
+                ]
+                prompt = build_chained_prompt(
                     tokenizer,
-                    prompt,
-                    completion,
+                    history_pairs,
                     generation_prompt=False,
-                    include_schema=bool(schema)
+                    include_schema=bool(flag)
                 )
-                texts.append(text)
-            return texts
+                prompt_list.append(prompt)
+            return prompt_list
         return format_batch
 
-    def train(self, learning_rate: float = 2e-4, num_train_epochs: int = 50):
+    def train(self, learning_rate: float = 2e-4, num_train_epochs: int = 20):
         dataset = load_dataset(self.dataset_dir)
         if torch.cuda.is_available():
             config = SFTConfig(
