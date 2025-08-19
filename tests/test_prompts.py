@@ -3,7 +3,6 @@
 #
 
 import pytest
-import json
 
 from llm.prompts import build_prompt, load_dataset
 
