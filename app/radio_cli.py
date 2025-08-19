@@ -74,6 +74,10 @@ def arg_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
+        '--show-tree', action='store_true',
+        help='Show flowgraph tree instead of table'
+    )
+    parser.add_argument(
         '--max-attempts', default=3, type=int,
         help='Maximum number of attempts for generating a valid response'
     )
@@ -156,7 +160,12 @@ def main_entry() -> int:
                     console.print_json(response)
 
                     controller.load_flowgraph(flowgraph)
-                    draw_flowgraph_tree(console, flowgraph)
+
+                    if args.show_tree:
+                        draw_flowgraph_tree(console, flowgraph)
+                    else:
+                        draw_flowgraph_table(console, flowgraph)
+
                     break
                 except ValidationError:
                     console.print('[bold red]Must not be a flowgraph JSON[/bold red]')
