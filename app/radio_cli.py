@@ -82,8 +82,8 @@ def arg_parser() -> argparse.ArgumentParser:
         help='Run in training mode (LoRA on CPU, QLoRA on CUDA if available)'
     )
     parser.add_argument(
-        '--model', default='output', type=str,
-        help='The model name to load (defaults to the trained output)'
+        '--model', default='Qwen/Qwen2.5-0.5B-Instruct', type=str,
+        help='The model name to load (set to output for tuned model)'
     )
     parser.add_argument(
         '--dataset', default='data', type=Path,
