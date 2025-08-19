@@ -31,7 +31,9 @@ def draw_flowgraph_tree(console: Console, flowgraph: Flowgraph):
     tree = Tree(f'[bold green]{flowgraph.name}[/bold green]')
 
     block_map = {b.id: b for b in flowgraph.blocks}
-    for src_id, dst_id in flowgraph.connections:
+    for conn in flowgraph.connections:
+        src_id = conn['from']
+        dst_id = conn['to']
         src_block = block_map.get(src_id)
         dst_block = block_map.get(dst_id)
         if src_block and dst_block:
@@ -46,9 +48,9 @@ def draw_flowgraph_table(console: Console, flowgraph: Flowgraph):
     Draw a flowgraph table in the console to display to the user.
     """
     block_table = Table(title='Blocks')
-    block_table.add_column('ID', style='cyan', no_wrap=True)
-    block_table.add_column('Name', style='blue')
-    block_table.add_column('Type', style='green')
+    block_table.add_column('ID', style='cyan')
+    block_table.add_column('Name', style='green')
+    block_table.add_column('Type', style='magenta')
     block_table.add_column('Params', style='magenta')
 
     for block in flowgraph.blocks:
@@ -60,8 +62,8 @@ def draw_flowgraph_table(console: Console, flowgraph: Flowgraph):
     conn_table.add_column('Source ID', style='cyan')
     conn_table.add_column('Destination ID', style='cyan')
 
-    for src_id, dst_id in flowgraph.connections:
-        conn_table.add_row(src_id, dst_id)
+    for conn in flowgraph.connections:
+        conn_table.add_row(conn['from'], conn['to'])
 
     console.print(Panel(block_table))
     console.print(Panel(conn_table))
