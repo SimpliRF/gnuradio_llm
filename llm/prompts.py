@@ -8,6 +8,8 @@ import base64
 
 from datasets import Dataset
 
+from flowgraph.schema import Flowgraph, FlowgraphAction
+
 
 SYSTEM_PROMPT_PREFIX = '''
 You are an assistant that generates GNU Radio flowgraphs.
@@ -19,8 +21,20 @@ Do not include any explanations or extra text. Return exactly ONE JSON object.
 '''
 
 
-def get_system_prompt() -> str:
-    return f'{SYSTEM_PROMPT_PREFIX}\n\n'
+def get_system_prompt(include_schema: bool = False) -> str:
+    system_prompt = f'{SYSTEM_PROMPT_PREFIX}\n\n'
+    if not include_schema:
+        return system_prompt
+
+    flowgraph_schema = json.dumps(
+        Flowgraph.model_json_schema(), separators=(',', ':')
+    )
+    action_schema = json.dumps(
+        FlowgraphAction.model_json_schema(), separators=(',', ':')
+    )
+    return (f'{system_prompt}' +
+            f'### Flowgraph Schema:\n{flowgraph_schema}\n\n' +
+            f'### Action Schema:\n{action_schema}\n')
 
 
 def build_prompt(tokenizer,
@@ -31,9 +45,10 @@ def build_prompt(tokenizer,
     Build a consistent prompt for training or inference.
     """
     completion_json = completion_json.strip()
+    include_schema = not generation_prompt
     if hasattr(tokenizer, 'apply_chat_template'):
         messages = [
-            {'role': 'system', 'content': get_system_prompt()},
+            {'role': 'system', 'content': get_system_prompt(include_schema)},
             {'role': 'user', 'content': user_prompt},
         ]
 
@@ -45,7 +60,7 @@ def build_prompt(tokenizer,
         )
         return prompt
 
-    system_prompt = get_system_prompt()
+    system_prompt = get_system_prompt(include_schema)
     if generation_prompt:
         return f'{system_prompt}\n\n### Prompt: {user_prompt}\n\n### Completion: '
     else:
@@ -58,17 +73,23 @@ def load_dataset(tokenizer, dataset_dir: str) -> Dataset:
     """
     samples = []
     for filename in os.listdir(dataset_dir):
-        if filename.endswith('.json'):
-            with open(os.path.join(dataset_dir, filename), 'r') as fp:
-                data = json.load(fp)
-                completion = base64.b64decode(data['completion'])
-                completion = json.loads(completion)
-                completion_str = json.dumps(completion, separators=(',', ':'))
-                samples.append({
-                    'prompt': data['prompt'],
-                    'completion': completion_str
-                })
+        if not filename.endswith('.json'):
+            continue
+        with open(os.path.join(dataset_dir, filename), 'r') as fp:
+            data = json.load(fp)
+
+        records = data if isinstance(data, list) else [data]
+        for r in records:
+            completion = base64.b64decode(r['completion'])
+            completion = json.loads(completion)
+            completion_str = json.dumps(completion, separators=(',', ':'))
+            samples.append({
+                'prompt': r['prompt'],
+                'completion': completion_str
+            })
+
     dataset = Dataset.from_list(samples)
+
     def map_to_text(text):
         return {
             'text': build_prompt(
@@ -78,5 +99,6 @@ def load_dataset(tokenizer, dataset_dir: str) -> Dataset:
                 generation_prompt=False
             )
         }
+
     dataset = dataset.map(map_to_text, remove_columns=['prompt', 'completion'])
     return dataset

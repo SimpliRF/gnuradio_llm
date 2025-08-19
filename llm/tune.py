@@ -68,7 +68,7 @@ class ModelTrainer:
 
         model = AutoModelForCausalLM.from_pretrained(
             self.fallback_model_name,
-            device_map={'': 'cpu'},
+            device_map='cpu',
             torch_dtype=torch.float32,
             low_cpu_mem_usage=True
         )
@@ -81,6 +81,7 @@ class ModelTrainer:
         if torch.cuda.is_available():
             config = SFTConfig(
                 output_dir=self.output_dir,
+                max_seq_length=1024,
                 per_device_train_batch_size=2,
                 gradient_accumulation_steps=4,
                 num_train_epochs=num_train_epochs,
@@ -92,6 +93,7 @@ class ModelTrainer:
         else:
             config = SFTConfig(
                 output_dir=self.output_dir,
+                max_seq_length=1024,
                 per_device_train_batch_size=1,
                 gradient_accumulation_steps=2,
                 num_train_epochs=num_train_epochs,

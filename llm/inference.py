@@ -5,6 +5,8 @@
 import os
 import torch
 
+from pathlib import Path
+
 from llm.prompts import build_prompt
 from llm.utils import extract_json_from_text
 
@@ -41,13 +43,16 @@ class ModelEngine:
                 quantization_config=self.config
             )
         else:
+            offload_dir = Path.home() / '.cache' / 'gr_llm_offload'
+            offload_dir.mkdir(parents=True, exist_ok=True)
             self.tokenizer = AutoTokenizer.from_pretrained(
                 self.fallback_model_name,
                 use_fast=True
             )
             self.model = AutoModelForCausalLM.from_pretrained(
                 self.fallback_model_name,
-                device_map='auto',
+                device_map='cpu',
+                offload_folder=str(offload_dir),
                 torch_dtype=torch.float32,
                 low_cpu_mem_usage=True
             )

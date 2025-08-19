@@ -82,6 +82,10 @@ def arg_parser() -> argparse.ArgumentParser:
         help='Run in training mode (LoRA on CPU, QLoRA on CUDA if available)'
     )
     parser.add_argument(
+        '--model', default='output', type=str,
+        help='The model name to load (defaults to the trained output)'
+    )
+    parser.add_argument(
         '--dataset', default='data', type=Path,
         help='Directory containing training samples (*.json)'
     )
@@ -121,7 +125,7 @@ def main_entry() -> int:
     console.print('Type a description of a flowgraph you want to build.')
     console.print('Type [bold red]exit[/bold red] or [bold red]Ctrl+C[/bold red] to quit.')
 
-    engine = ModelEngine()
+    engine = ModelEngine(fallback_model_name=args.model)
     controller = FlowgraphController(console)
 
     while True:
