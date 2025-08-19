@@ -5,7 +5,7 @@
 import os
 import torch
 
-from llm.prompts import get_system_prompt
+from llm.prompts import build_prompt
 from llm.utils import extract_json_from_text
 
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -57,32 +57,11 @@ class ModelEngine:
         self.model.config.use_cache = True
         self.model.eval()
 
-    def _get_prompt(self, user_prompt: str) -> str:
-        if not self.tokenizer:
-            raise RuntimeError('Tokenizer must be loaded before generating prompts.')
-        if hasattr(self.tokenizer, 'apply_chat_template'):
-            messages = [
-                {'role': 'system',
-                 'content': 'You are a helpful assistant. Return exactly ONE JSON object.'},
-                {'role': 'user', 'content': user_prompt}
-            ]
-            prompt = self.tokenizer.apply_chat_template(
-                messages, tokenize=False, add_generation_prompt=True
-            )
-            return prompt
-        else:
-            prompt = (
-                get_system_prompt() +
-                f'\n\n### Prompt: {user_prompt}' +
-                f'\n\n### Completion: '
-            )
-            return prompt
-
     def generate(self, user_prompt: str, max_tokens: int = 1024) -> str:
         if not self.model or not self.tokenizer:
             raise RuntimeError('Model and tokenizer must be loaded before generation.')
 
-        prompt = self._get_prompt(user_prompt)
+        prompt = build_prompt(self.tokenizer, user_prompt)
         inputs = self.tokenizer(
             prompt,
             return_tensors='pt'

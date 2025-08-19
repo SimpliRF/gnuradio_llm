@@ -31,7 +31,7 @@ def get_system_prompt() -> str:
 
 def build_prompt(tokenizer,
                  user_prompt: str,
-                 completion_json: str,
+                 completion_json: str = '',
                  generation_prompt: bool = True) -> str:
     """
     Build a consistent prompt for training or inference.
