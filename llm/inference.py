@@ -59,7 +59,7 @@ class ModelEngine:
         self.model.config.use_cache = True
         self.model.eval()
 
-    def generate(self, user_prompt: str, max_tokens: int = 1024) -> str:
+    def generate(self, user_prompt: str, max_tokens: int = 4096) -> str:
         prompt = build_prompt(
             self.tokenizer, user_prompt, generation_prompt=True
         )
@@ -84,7 +84,7 @@ class ModelEngine:
     def retry_with_feedback(self,
                             user_prompt: str,
                             feedback: str,
-                            max_tokens: int = 1024) -> str:
+                            max_tokens: int = 4096) -> str:
         retry_prompt = (
             f'The previous attempt failed with the following feedback:\n{feedback}\n'
             f'Please try again and produce the correct JSON.\n\n'

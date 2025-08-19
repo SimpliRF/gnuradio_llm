@@ -112,7 +112,7 @@ class ModelTrainer:
         if torch.cuda.is_available():
             config = SFTConfig(
                 output_dir=self.output_dir,
-                max_seq_length=2048,
+                max_seq_length=4096,
                 per_device_train_batch_size=2,
                 gradient_accumulation_steps=4,
                 num_train_epochs=num_train_epochs,
@@ -127,7 +127,7 @@ class ModelTrainer:
         else:
             config = SFTConfig(
                 output_dir=self.output_dir,
-                max_seq_length=2048,
+                max_seq_length=4096,
                 per_device_train_batch_size=1,
                 gradient_accumulation_steps=1,
                 num_train_epochs=num_train_epochs,
