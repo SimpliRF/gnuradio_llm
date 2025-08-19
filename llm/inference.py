@@ -56,6 +56,12 @@ class ModelEngine:
                 torch_dtype=torch.float32,
                 low_cpu_mem_usage=True
             )
+
+        if self.tokenizer.pad_token_id is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token or '</s>'
+        self.model.config.pad_token_id = self.tokenizer.pad_token_id
+        self.model.config.eos_token_id = self.tokenizer.eos_token_id
+
         self.model.config.use_cache = True
         self.model.eval()
 
@@ -68,15 +74,29 @@ class ModelEngine:
             return_tensors='pt'
         ).to(self.model.device)
 
+        eos_ids = {self.tokenizer.eos_token_id}
+        eos_candidates = (
+            '<|im_end|>', '</s>', '<|end|>', '<|eot_id|>', '<|endoftext|>'
+        )
+        for token in eos_candidates:
+            tid = self.tokenizer.convert_tokens_to_ids(token)
+            if isinstance(tid, int) and tid >= 0:
+                eos_ids.add(tid)
+
         output = self.model.generate(
             **inputs,
             max_new_tokens=max_tokens,
-            temperature=1.0,
-            top_p=1.0,
-            top_k=None,
             do_sample=False,
             num_beams=1,
             early_stopping=False,
+            eos_token_id=list(eos_ids),
+            pad_token_id=self.tokenizer.pad_token_id,
+            use_cache=True,
+            return_dict_in_generate=False,
+            output_scores=False,
+            temperature=1.0,
+            top_p=1.0,
+            top_k=None
         )
         decoded = self.tokenizer.decode(output[0], skip_special_tokens=True)
         return extract_json_from_text(decoded)
