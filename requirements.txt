@@ -4,7 +4,7 @@ torch==2.5.1
 setuptools<71.0.0
 prompt_toolkit==3.0.51
 transformers==4.46.3
-datasets==3.1.0
+datasets==4.0.0
 accelerate==1.1.1
 bitsandbytes==0.45.2
 trl==0.12.1
