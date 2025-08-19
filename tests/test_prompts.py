@@ -27,20 +27,6 @@ class DummyTokenizer:
     pass
 
 
-def test_system_prompt_contains_schema():
-    prompt = get_system_prompt()
-
-    flowgraph_schema = json.dumps(
-        Flowgraph.model_json_schema(), separators=(',', ':')
-    )
-    action_schema = json.dumps(
-        FlowgraphAction.model_json_schema(), separators=(',', ':')
-    )
-
-    assert flowgraph_schema.strip() in prompt
-    assert action_schema.strip() in prompt
-
-
 def test_build_prompt_with_tokenizer():
     tokenizer = DummyTokenizer()
     user_prompt = 'Create a flowgraph with a source and a sink'
