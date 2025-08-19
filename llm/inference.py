@@ -21,9 +21,6 @@ class ModelEngine:
         self.fallback_model_name = fallback_model_name
         self.hf_token = os.environ.get(hf_token_env, None)
 
-        self.tokenizer = None
-        self.model = None
-
         self._load_model()
 
     def _load_model(self):
@@ -58,10 +55,9 @@ class ModelEngine:
         self.model.eval()
 
     def generate(self, user_prompt: str, max_tokens: int = 1024) -> str:
-        if not self.model or not self.tokenizer:
-            raise RuntimeError('Model and tokenizer must be loaded before generation.')
-
-        prompt = build_prompt(self.tokenizer, user_prompt)
+        prompt = build_prompt(
+            self.tokenizer, user_prompt, generation_prompt=True
+        )
         inputs = self.tokenizer(
             prompt,
             return_tensors='pt'
@@ -74,7 +70,7 @@ class ModelEngine:
             top_p=1.0,
             top_k=None,
             do_sample=False,
-            num_beams=3,
+            num_beams=1,
             early_stopping=False,
         )
         decoded = self.tokenizer.decode(output[0], skip_special_tokens=True)

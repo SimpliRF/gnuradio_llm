@@ -17,16 +17,12 @@ You must respond only with JSON matching one of the following schemas:
 - Flowgraph: when creating or modifying a flowgraph.
 - FlowgraphAction: when performing control actions like start, stop, and more.
 
-Do not include any explanations or extra text, only the JSON output.
+Do not include any explanations or extra text. Return exactly ONE JSON object.
 '''
 
 
 def get_system_prompt() -> str:
-    flowgraph_schema = json.dumps(Flowgraph.model_json_schema(), separators=(',', ':'))
-    action_schema = json.dumps(FlowgraphAction.model_json_schema(), separators=(',', ':'))
-    return (f'{SYSTEM_PROMPT_PREFIX}\n\n'
-            f'Flowgraph schema:\n{flowgraph_schema}\n\n'
-            f'FlowgraphAction schema:\n{action_schema}\n\n')
+    return f'{SYSTEM_PROMPT_PREFIX}\n\n'
 
 
 def build_prompt(tokenizer,
@@ -41,19 +37,21 @@ def build_prompt(tokenizer,
         messages = [
             {'role': 'system', 'content': get_system_prompt()},
             {'role': 'user', 'content': user_prompt},
-            {'role': 'assistant', 'content': completion_json}
         ]
+
+        if not generation_prompt:
+            messages.append({'role': 'assistant', 'content': completion_json})
+
         prompt = tokenizer.apply_chat_template(
             messages, tokenize=False, add_generation_prompt=generation_prompt
         )
         return prompt
 
-    prompt = (
-        get_system_prompt() +
-        f'\n\n### Prompt: {user_prompt}' +
-        f'\n\n### Completion: {completion_json if not generation_prompt else ""}'
-    )
-    return prompt
+    system_prompt = get_system_prompt()
+    if generation_prompt:
+        return f'{system_prompt}\n\n### Prompt: {user_prompt}\n\n### Completion: '
+    else:
+        return f'{system_prompt}\n\n### Prompt: {user_prompt}\n\n### Completion: {completion_json}'
 
 
 def load_dataset(tokenizer, dataset_dir: str) -> Dataset:
