@@ -5,8 +5,7 @@
 import pytest
 import json
 
-from flowgraph.schema import Flowgraph, FlowgraphAction
-from llm.prompts import get_system_prompt, build_prompt, load_dataset
+from llm.prompts import build_prompt, load_dataset
 
 
 class DummyChatTokenizer:
@@ -69,3 +68,16 @@ def test_build_prompt_with_chat_tokenizer():
 
     assert 'user: Create a flowgraph with a source and a sink' in output
     assert 'ADD_GEN:True' in output
+
+
+def test_load_dataset():
+    tokenizer = DummyTokenizer()
+
+    dataset = load_dataset(tokenizer, 'tests/mock_data')
+
+    assert len(dataset) >= 1
+    assert 'text' in dataset.column_names
+
+    sample_text = dataset[0]['text']
+    assert '### Prompt:' in sample_text
+    assert '### Completion:' in sample_text
