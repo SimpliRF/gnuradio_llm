@@ -2,9 +2,9 @@ name: gnuradio-llm
 channels:
   - conda-forge
 dependencies:
-  - gnuradio
-  - pyqt
-  - numpy
-  - pip
+  - gnuradio=3.10.12
+  - pyqt=5.15.11
+  - numpy=2.3.2
+  - pip=25.2
   - pip:
       - -r requirements.txt
