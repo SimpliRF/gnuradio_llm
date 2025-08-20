@@ -37,6 +37,9 @@ class FlowgraphRunner:
         self.blocks: Dict[str, Any] = {}
         self.block_registry = self._build_block_registry()
 
+        self.console.print('🔧  Building flowgraph...')
+        self._build()
+
     @staticmethod
     def _is_gr_block(obj: Any) -> bool:
         try:
@@ -100,14 +103,14 @@ class FlowgraphRunner:
             dst_block = self.blocks.get(dst_id)
             self.tb.connect(src_block, dst_block)
 
+    def get_block(self, block_id: str) -> Any:
+        return self.blocks.get(block_id)
+
     def start(self):
         self.console.print('▶️  Starting flowgraph...')
         self.tb.start()
 
     def run(self):
-        self.console.print('🔧  Building flowgraph...')
-        self._build()
-
         self.console.print('🔁  Running flowgraph...')
         try:
             self.tb.run()

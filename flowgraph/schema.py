@@ -49,8 +49,7 @@ class FlowgraphAction(BaseModel):
     """
     Represents an action to be performed on a flowgraph.
     """
-    flowgraph: Flowgraph
     action: str
     block_id: Optional[str] = None
-    parameter: Optional[str] = None
+    method: Optional[str] = None
     value: Optional[float | int | str | bool] = None

@@ -45,7 +45,7 @@ class FlowgraphController:
 
     def status(self) -> str:
         if not self.runner:
-            return "No flowgraph loaded."
+            return 'No flowgraph loaded.'
         duration = time.time() - self.start_time if self.start_time else 0
         return f'State: {self.state} | Uptime: {duration:.2f} seconds'
 
@@ -60,29 +60,50 @@ class FlowgraphController:
         self.console.print('Flowgraph reset')
 
     def handle_action(self, action: FlowgraphAction) -> str:
+        if not self.runner:
+            return 'No flowgraph loaded'
+
         if action.action == 'start':
             self.start()
             return 'flowgraph has started'
+
         elif action.action == 'stop':
             self.stop()
             return 'flowgraph has stopped'
-        elif action.action == 'set':
-            if action.block_id and action.parameter:
-                # TODO: Set the parameter of a block
-                return 'flowgraph parameter has been set'
-            if action.block_id is None:
-                return 'missing block ID for set action'
-            if action.parameter is None:
-                return 'missing parameter for set action'
-        elif action.action == 'get':
-            if action.block_id and action.parameter:
-                # TODO: Get the parameter of a block
-                value = ''
-                return (f'flowgraph parameter has been retrieved: ' +
-                        f'{action.parameter} = {value}')
-            if action.block_id is None:
-                return 'missing block ID for get action'
-            if action.parameter is None:
-                return 'missing parameter for get action'
+
+        elif action.action == 'block_set':
+            if action.block_id:
+                block = self.runner.get_block(action.block_id)
+                if block is None:
+                    return f'Block with ID {action.block_id} not found'
+
+                if action.method is None:
+                    return 'Missing method for set action'
+
+                if action.value is None:
+                    return 'Missing value for set action'
+
+                method = getattr(block, action.method, None)
+                if callable(method):
+                    method(action.value)
+                    return f'Successfully set: {action.method} = {action.value}'
+                return f'Setter method {action.method} not found on block {action.block_id}'
+            return f'Block {action.block_id} not found'
+
+        elif action.action == 'block_get':
+            if action.block_id:
+                block = self.runner.get_block(action.block_id)
+                if block is None:
+                    return f'Block {action.block_id} not found'
+
+                if action.method is None:
+                    return 'Missing method for get action'
+
+                method = getattr(block, action.method, None)
+                if callable(method):
+                    value = method()
+                    return f'Successfully retrieved: {action.method} = {value}'
+                return f'Getter method {action.method} not found on block {action.block_id}'
+            return f'Block {action.block_id} not found'
 
         raise ValueError(f'Unsupported action: {action.action}')
