@@ -1,17 +1,13 @@
 # GNU Radio Large Language Model (LLM)
 
-This repository contains an LLM specifically tuned for generating and controlling
-GNU Radio flowgraphs. Utilizing Mistral 7B as a foundation model, this project
-provides a pipeline for quickly adding examples and re-tune the model using LoRa
-(Low-Rank Adaption of LLMs).
+This project provides an LLM pipeline for quickly adding examples and re-tune
+the foundation model of choice using LoRA (Low-Rank Adaption of LLMs).
+
+The project also includes a dataset logger for GNU Radio Companion (GRC)
+for emitting history-style training examples.
 
 **NOTE**: This project is not affiliated with or sponsored by any of the
 official GNU Radio organizations.
-
-## Dependencies
-
-* Python [>=3.12]
-* GNU Radio [>=3.10]
 
 ## Building (Linux)
 
@@ -21,11 +17,14 @@ installer and then install it using:
 bash Miniforge3-$(uname)-$(uname -m).sh
 ```
 
-From the root of the repository, run the following commands:
+From the project root, run the following commands:
 ```
 conda env create -f environment.yml
 conda activate gnuradio-llm
+export PYTHONPATH=$PYTHONPATH:$(pwd)
 ```
+
+Then execute all scripts or tools from the root of the project.
 
 ## GPL License
 ```
