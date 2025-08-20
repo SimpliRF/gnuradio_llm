@@ -32,8 +32,8 @@ def draw_flowgraph_tree(console: Console, flowgraph: Flowgraph):
 
     block_map = {b.id: b for b in flowgraph.blocks}
     for conn in flowgraph.connections:
-        src_id = conn['from']
-        dst_id = conn['to']
+        src_id = conn['from'].split(':')[0]
+        dst_id = conn['to'].split(':')[0]
         src_block = block_map.get(src_id)
         dst_block = block_map.get(dst_id)
         if src_block and dst_block:
@@ -76,7 +76,7 @@ def arg_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
-        '--show-tree', action='store_true',
+        '--tree', action='store_true',
         help='Show flowgraph tree instead of table'
     )
     parser.add_argument(
