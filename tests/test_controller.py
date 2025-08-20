@@ -90,6 +90,28 @@ def test_flowgraph_controller_action():
     graph = Flowgraph.model_validate_json(TEST_FLOWGRAPH_JSON)
     controller.load_flowgraph(graph)
 
+    start_action_json = '''
+    {
+        "action": "start"
+    }
+    '''
+
+    start_action = FlowgraphAction.model_validate_json(start_action_json)
+    response = controller.handle_action(start_action)
+
+    assert 'Flowgraph has started' in response
+
+    stop_action_json = '''
+    {
+        "action": "stop"
+    }
+    '''
+
+    stop_action = FlowgraphAction.model_validate_json(stop_action_json)
+    response = controller.handle_action(stop_action)
+
+    assert 'Flowgraph has stopped' in response
+
     set_action_json = '''
     {
         "action": "block_set",

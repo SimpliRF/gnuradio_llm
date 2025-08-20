@@ -65,11 +65,11 @@ class FlowgraphController:
 
         if action.action == 'start':
             self.start()
-            return 'flowgraph has started'
+            return 'Flowgraph has started'
 
         elif action.action == 'stop':
             self.stop()
-            return 'flowgraph has stopped'
+            return 'Flowgraph has stopped'
 
         elif action.action == 'block_set':
             if action.block_id:
