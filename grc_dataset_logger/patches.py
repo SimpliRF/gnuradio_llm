@@ -89,7 +89,7 @@ def patch_flowgraph(logger: FlowgraphLogger):
 def patch_top_block(tb_cls: Type[top_block], logger: ActionLogger):
     def on_top_block_change(self, method, args, kwargs, result):
         print(f'Top block method "{method}" called with args: {args}, kwargs: {kwargs}, result: {result}', flush=True)
-        logger.on_top_block_change(self, method, args, kwargs)
+        logger.on_top_block_change(self, method, args, kwargs, result)
         return None
 
     for name in dir(tb_cls):

@@ -12,15 +12,18 @@ from grc_dataset_logger.config import Config
 
 
 class FlowgraphLogger:
+    """
+    The flowgraph logger records changes to GRC flowgraphs before execution.
+    """
     def __init__(self, config: Config = Config()):
         self.config = config
         self.lock = threading.Lock()
-        self.config.output_dir.mkdir(parents=True, exist_ok=True)
+        self.config.trace_dir.mkdir(parents=True, exist_ok=True)
 
         self.session_id = uuid4().hex[:8]
 
         trace_file_name = f'{self.session_id}.jsonl'
-        self.traces_dir = self.config.output_dir / 'flowgraph'
+        self.traces_dir = self.config.trace_dir / 'flowgraph'
         self.traces_dir.mkdir(parents=True, exist_ok=True)
         self.traces_path = self.traces_dir / trace_file_name
 
@@ -48,7 +51,7 @@ class FlowgraphLogger:
     def save_session(self):
         with self.lock:
             if not self.traces:
-                print('No traces saved this session')
+                print('No flowgraph traces saved this session')
                 return
 
             with open(self.traces_path, 'w') as fp:

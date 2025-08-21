@@ -20,7 +20,10 @@ def execute_script(script_path: Path):
 
     patch_top_block(top_block_cls, ACTION_LOGGER)
 
-    return main_func(top_block_cls)
+    result = main_func(top_block_cls)
+
+    ACTION_LOGGER.save_session()
+    return result
 
 
 if __name__ == '__main__':
@@ -28,4 +31,6 @@ if __name__ == '__main__':
     if not path:
         print('Usage: python launch_top_block.py <path_to_top_block>')
         sys.exit(1)
-    execute_script(Path(path))
+
+    result = execute_script(Path(path))
+    sys.exit(result)
