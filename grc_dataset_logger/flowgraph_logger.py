@@ -39,6 +39,7 @@ class FlowgraphLogger:
             snapshot_0 = self.prev_snapshot
             self.prev_snapshot = snapshot_1
             self.traces.append({
+                'flowgraph_id': flowgraph.get_option('id'),
                 'timestamp': self._timestamp(),
                 'snapshot_0': snapshot_0,
                 'snapshot_1': snapshot_1,
