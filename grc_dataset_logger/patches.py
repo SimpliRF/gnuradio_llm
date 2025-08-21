@@ -9,10 +9,11 @@ from importlib.util import spec_from_file_location, module_from_spec
 from pathlib import Path
 from typing import Any, Tuple, Type
 
+from gnuradio.gr.top_block import top_block
+from gnuradio.grc.core.FlowGraph import FlowGraph
+
 from grc_dataset_logger.flowgraph_logger import FlowgraphLogger
 from grc_dataset_logger.action_logger import ActionLogger
-
-from gnuradio.gr.top_block import top_block
 
 
 GRC_FLOWGRAPH_METHODS = (
@@ -68,8 +69,6 @@ def patch_flowgraph(logger: FlowgraphLogger):
     """
     This function patches selected methods in GRC's flowgraph model.
     """
-    from gnuradio.grc.core.FlowGraph import FlowGraph
-
     def on_flowgraph_change(self, method, args, kwargs, result):
         if method == 'get_run_command':
             if isinstance(result, str):
@@ -87,8 +86,10 @@ def patch_flowgraph(logger: FlowgraphLogger):
 
 
 def patch_top_block(tb_cls: Type[top_block], logger: ActionLogger):
+    """
+    This function patches setters and getters in a GRC generated top block.
+    """
     def on_top_block_change(self, method, args, kwargs, result):
-        print(f'Top block method "{method}" called with args: {args}, kwargs: {kwargs}, result: {result}', flush=True)
         logger.on_top_block_change(self, method, args, kwargs, result)
         return None
 
