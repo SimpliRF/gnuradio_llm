@@ -2,12 +2,11 @@
 # This file is part of the GNU Radio LLM project.
 #
 
-import os
 import json
-import base64
 import threading
+import datetime
 
-from typing import Dict, Any
+from uuid import uuid4
 
 from grc_dataset_logger.config import Config
 
@@ -18,18 +17,42 @@ class FlowgraphLogger:
         self.lock = threading.Lock()
         self.config.output_dir.mkdir(parents=True, exist_ok=True)
 
-    def _save_session(self):
-        pass
+        self.session_id = uuid4().hex[:8]
 
-    def _get_completion(self, flowgraph) -> str:
-        pass
+        trace_file_name = f'{self.session_id}.jsonl'
+        self.traces_dir = self.config.output_dir / 'flowgraph'
+        self.traces_dir.mkdir(parents=True, exist_ok=True)
+        self.traces_path = self.traces_dir / trace_file_name
 
-    def _classify_flowgraph_action(self, method, args, kwargs) -> Dict[str, Any]:
-        pass
+        self.traces = []
+        self.prev_snapshot = None
 
-    def _classify_block_action(self, method, args, kwargs) -> Dict[str, Any]:
-        pass
+    def _timestamp(self) -> str:
+        return datetime.datetime.now(datetime.timezone.utc).isoformat() + 'Z'
 
     def on_flowgraph_change(self, flowgraph, method, args, kwargs):
         with self.lock:
-            pass
+            snapshot_1 = flowgraph.export_data()
+            if snapshot_1 == self.prev_snapshot:
+                return
+
+            snapshot_0 = self.prev_snapshot
+            self.prev_snapshot = snapshot_1
+            self.traces.append({
+                'timestamp': self._timestamp(),
+                'snapshot_0': snapshot_0,
+                'snapshot_1': snapshot_1,
+            })
+
+    def save_session(self):
+        with self.lock:
+            if not self.traces:
+                print('No traces saved this session')
+                return
+
+            with open(self.traces_path, 'w') as fp:
+                for trace in self.traces:
+                    json.dump(trace, fp)
+                    fp.write('\n')
+
+            print(f'---> Saved flowgraph traces to {self.traces_path}')

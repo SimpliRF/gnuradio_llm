@@ -10,4 +10,4 @@ from pathlib import Path
 
 @dataclass
 class Config:
-    output_dir: Path = Path(os.environ.get('GRC_DATASET_DIR', 'data'))
+    output_dir: Path = Path(os.environ.get('GRC_DATASET_DIR', 'traces'))

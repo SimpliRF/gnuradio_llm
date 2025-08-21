@@ -92,7 +92,7 @@ def arg_parser() -> argparse.ArgumentParser:
         help='The model name to load (set to output for tuned model)'
     )
     parser.add_argument(
-        '--dataset', default='data', type=Path,
+        '--dataset', default='dataset', type=Path,
         help='Directory containing training samples (*.json)'
     )
     parser.add_argument(

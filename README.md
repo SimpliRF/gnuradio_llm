@@ -6,6 +6,9 @@ the foundation model of choice using LoRA (Low-Rank Adaption of LLMs).
 The project also includes a dataset logger for GNU Radio Companion (GRC)
 for emitting history-style training examples. GRC is often used for
 education, so it makes sense to use it to create training data.
+The dataset logger hooks into GRC and any flowgraphs deployed through the GRC
+GUI to record traces that can then be used to create a dataset.
+This dataset can in turn be used to fine-tune a model further.
 
 **NOTE**: This project is not affiliated with or sponsored by any of the
 official GNU Radio organizations.

@@ -71,7 +71,6 @@ def patch_flowgraph(logger: FlowgraphLogger):
     from gnuradio.grc.core.FlowGraph import FlowGraph
 
     def on_flowgraph_change(self, method, args, kwargs, result):
-        print(f'FlowGraph method "{method}" called with args: {args}, kwargs: {kwargs}, result: {result}')
         if method == 'get_run_command':
             if isinstance(result, str):
                 script_path = result.split(' ')[-1]
@@ -84,7 +83,7 @@ def patch_flowgraph(logger: FlowgraphLogger):
     for method in GRC_FLOWGRAPH_METHODS:
         if hasattr(FlowGraph, method):
             hook_method(FlowGraph, method, on_flowgraph_change)
-    print('GRC dataset logger hooked GRC successfully')
+    print('---> GRC dataset logger hooked GRC successfully')
 
 
 def patch_top_block(tb_cls: Type[top_block], logger: ActionLogger):

@@ -21,7 +21,7 @@ class ModelTrainer:
     def __init__(self,
                  model_name: str = 'mistralai/Mistral-7B-Instruct-v0.2',
                  fallback_model_name: str = 'Qwen/Qwen2.5-0.5B-Instruct',
-                 dataset_dir: str = 'data',
+                 dataset_dir: str = 'dataset',
                  output_dir: str = 'output',
                  hf_token_env: str = 'HUGGINGFACE_HUB_TOKEN'):
         self.model_name = model_name
