@@ -12,7 +12,7 @@ from typing import Dict, Any
 from grc_dataset_logger.config import Config
 
 
-class GRCLogger:
+class FlowgraphLogger:
     def __init__(self, config: Config = Config()):
         self.config = config
         self.lock = threading.Lock()
@@ -31,9 +31,5 @@ class GRCLogger:
         pass
 
     def on_flowgraph_change(self, flowgraph, method, args, kwargs):
-        with self.lock:
-            pass
-
-    def on_block_param_change(self, block, method, args, kwargs):
         with self.lock:
             pass
