@@ -30,7 +30,7 @@ class RuntimeLogger:
         self.traces = []
 
     def _timestamp(self) -> str:
-        return datetime.datetime.now(datetime.timezone.utc).isoformat() + 'Z'
+        return datetime.datetime.now(datetime.timezone.utc).isoformat()
 
     @staticmethod
     def _sanitize_for_json(data):

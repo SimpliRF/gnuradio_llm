@@ -31,7 +31,7 @@ class FlowgraphLogger:
         self.prev_snapshot = None
 
     def _timestamp(self) -> str:
-        return datetime.datetime.now(datetime.timezone.utc).isoformat() + 'Z'
+        return datetime.datetime.now(datetime.timezone.utc).isoformat()
 
     def on_flowgraph_change(self, flowgraph, method, args, kwargs):
         with self.lock:
