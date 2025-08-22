@@ -38,9 +38,8 @@ export PYTHONPATH=$PYTHONPATH:$(pwd)
 ```
 
 Creating training examples is possible with the `grc_dataset_logger`. The tool
-applies a patch and then every meaningful edit becomes a structured
-prompt-completion pair. These pairs are grouped into histories and periodically
-written to JSON dataset files to feed the tuning process.
+patches GRC and runtime flowgraphs to record trace data, which is transformed
+in a separate phase into an actual dataset for fine-tuning the LLM.
 
 To launch GRC with the logger enabled, simply run the following script:
 ```
