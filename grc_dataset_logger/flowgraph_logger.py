@@ -23,7 +23,7 @@ class FlowgraphLogger:
         self.session_id = uuid4().hex[:8]
 
         trace_file_name = f'{self.session_id}.jsonl'
-        self.traces_dir = self.config.trace_dir / 'flowgraph'
+        self.traces_dir = self.config.trace_dir / 'flowgraphs'
         self.traces_dir.mkdir(parents=True, exist_ok=True)
         self.traces_path = self.traces_dir / trace_file_name
 
