@@ -11,9 +11,9 @@ from uuid import uuid4
 from grc_dataset_logger.config import Config
 
 
-class ActionLogger:
+class RuntimeLogger:
     """
-    The action logger records traces from live flowgraphs deployed via GRC.
+    The runtime logger records traces from live flowgraphs deployed via GRC.
     """
     def __init__(self, config: Config = Config()):
         self.config = config
@@ -35,9 +35,9 @@ class ActionLogger:
     @staticmethod
     def _sanitize_for_json(data):
         if isinstance(data, (list, tuple, set)):
-            return [ActionLogger._sanitize_for_json(item) for item in data]
+            return [RuntimeLogger._sanitize_for_json(item) for item in data]
         elif isinstance(data, dict):
-            return {key: ActionLogger._sanitize_for_json(value) for key, value in data.items()}
+            return {key: RuntimeLogger._sanitize_for_json(value) for key, value in data.items()}
         elif isinstance(data, (str, int, float, bool)):
             return data
         return str(data)

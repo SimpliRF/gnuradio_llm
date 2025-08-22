@@ -13,7 +13,7 @@ from gnuradio.gr.top_block import top_block
 from gnuradio.grc.core.FlowGraph import FlowGraph
 
 from grc_dataset_logger.flowgraph_logger import FlowgraphLogger
-from grc_dataset_logger.action_logger import ActionLogger
+from grc_dataset_logger.runtime_logger import RuntimeLogger
 
 
 GRC_FLOWGRAPH_METHODS = (
@@ -85,7 +85,7 @@ def patch_flowgraph(logger: FlowgraphLogger):
     print('---> GRC dataset logger hooked GRC successfully')
 
 
-def patch_top_block(tb_cls: Type[top_block], logger: ActionLogger):
+def patch_top_block(tb_cls: Type[top_block], logger: RuntimeLogger):
     """
     This function patches setters and getters in a GRC generated top block.
     """
