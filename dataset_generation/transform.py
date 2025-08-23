@@ -13,7 +13,7 @@ from dataset_generation.schema import Action
 from dataset_generation.flowgraph import normalize_flowgraph_entry
 from dataset_generation.runtime import normalize_runtime_entry
 
-from flowgraph.schema import Flowgraph, FlowgraphAction
+from flowgraph.schema import Flowgraph
 
 
 def encode_completion(data: BaseModel) -> str:
