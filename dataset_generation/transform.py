@@ -6,6 +6,7 @@ import json
 import base64
 
 from pathlib import Path
+from pydantic import BaseModel
 
 from dataset_generation.schema import Action
 
@@ -15,9 +16,9 @@ from dataset_generation.runtime import normalize_runtime_entry
 from flowgraph.schema import Flowgraph, FlowgraphAction
 
 
-def encode_completion(graph: Flowgraph) -> str:
-    graph_json = graph.model_dump_json().encode('utf-8')
-    return base64.b64encode(graph_json).decode('utf-8')
+def encode_completion(data: BaseModel) -> str:
+    data_json = data.model_dump_json().encode('utf-8')
+    return base64.b64encode(data_json).decode('utf-8')
 
 
 def generate_prompt(action: Action) -> str:
@@ -46,7 +47,7 @@ def generate_prompt(action: Action) -> str:
             return f'Perform the action {action.action}'
 
 
-def build_dataset(trace_dir: Path, dataset_dir: Path):
+def build_datasets(trace_dir: Path, dataset_dir: Path):
     """
     Transform the traces into two datasets: runtime actions and flowgraph changes.
     """
@@ -82,5 +83,30 @@ def build_dataset(trace_dir: Path, dataset_dir: Path):
         if history:
             flowgraphs_dataset.append(history)
 
-    # TODO: Create the action dataset next
+    for trace_file in actions_dir.glob('*.jsonl'):
+        history = []
+        with trace_file.open('r') as fp:
+            for line in fp:
+                line = line.strip()
+                if not line:
+                    raise ValueError('Empty line in actions trace file')
 
+                entry = json.loads(line)
+                actions = normalize_runtime_entry(line)
+                for action in actions:
+                    history.append({
+                        'prompt': generate_prompt(action),
+                        'completion': encode_completion(action)
+                    })
+        if history:
+            actions_dataset.append(history)
+
+    with flowgraphs_dataset_path.open('w') as fp:
+        for history in flowgraphs_dataset:
+            json.dump(history, fp)
+            fp.write('\n')
+
+    with actions_dataset_path.open('w') as fp:
+        for history in actions_dataset:
+            json.dump(history, fp)
+            fp.write('\n')
