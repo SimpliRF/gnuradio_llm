@@ -24,9 +24,7 @@ def test_runner_from_valid_json():
                     "wave_freq": 1000.0,
                     "ampl": 1.0,
                     "waveform": 0
-                },
-                "inputs": [],
-                "outputs": ["out"]
+                }
             },
             {
                 "id": "throttle",
@@ -35,9 +33,7 @@ def test_runner_from_valid_json():
                 "parameters": {
                     "itemsize": 4,
                     "samples_per_sec": 32000.0
-                },
-                "inputs": ["in"],
-                "outputs": ["out"]
+                }
             },
             {
                 "id": "sink",
@@ -45,9 +41,7 @@ def test_runner_from_valid_json():
                 "type": "null_sink",
                 "parameters": {
                     "sizeof_stream_item": 4
-                },
-                "inputs": ["in"],
-                "outputs": []
+                }
             }
         ],
         "connections": [

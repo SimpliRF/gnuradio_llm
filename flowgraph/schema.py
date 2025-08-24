@@ -14,8 +14,6 @@ class Block(BaseModel):
     name: str
     type: str
     parameters: Dict[str, float | int | str | bool] = Field(default_factory=dict)
-    inputs: List[str] = Field(default_factory=list)
-    outputs: List[str] = Field(default_factory=list)
 
 
 class GUIConfig(BaseModel):

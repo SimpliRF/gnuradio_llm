@@ -23,9 +23,7 @@ TEST_FLOWGRAPH_JSON = '''
                 "wave_freq": 1000.0,
                 "ampl": 1.0,
                 "waveform": 0
-            },
-            "inputs": [],
-            "outputs": ["out"]
+            }
         },
         {
             "id": "throttle",
@@ -34,9 +32,7 @@ TEST_FLOWGRAPH_JSON = '''
             "parameters": {
                 "itemsize": 4,
                 "samples_per_sec": 32000.0
-            },
-            "inputs": ["in"],
-            "outputs": ["out"]
+            }
         },
         {
             "id": "sink",
@@ -44,9 +40,7 @@ TEST_FLOWGRAPH_JSON = '''
             "type": "null_sink",
             "parameters": {
                 "sizeof_stream_item": 4
-            },
-            "inputs": ["in"],
-            "outputs": []
+            }
         }
     ],
     "connections": [
