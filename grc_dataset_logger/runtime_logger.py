@@ -48,7 +48,7 @@ class RuntimeLogger:
                 return
 
             self.traces.append({
-                'flowgraph_id': str(top_block.__class__.__name__),
+                'id': str(top_block.__class__.__name__),
                 'timestamp': self._timestamp(),
                 'method': method,
                 'args': self._sanitize_for_json(args),

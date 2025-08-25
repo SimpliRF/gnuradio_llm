@@ -14,7 +14,7 @@ def extract_json_from_text(text: str) -> str:
     if match:
         try:
             data = json.loads(match.group(0))
-            return json.dumps(data, indent=2)
+            return json.dumps(data, indent=4)
         except json.JSONDecodeError:
             pass
     raise ValueError('Failed to extract valid JSON from text')

@@ -1,110 +1,68 @@
+# type: ignore
 #
 # This file is part of the GNU Radio LLM project.
 #
 
-import importlib
-import inspect
-import pkgutil
+import tempfile
 
-from typing import Any, Dict
+from typing import Type
+from pathlib import Path
+
 from rich.console import Console
+
 from gnuradio import gr
-from flowgraph.schema import Flowgraph, Block
+from gnuradio.grc.core.platform import Platform
+from gnuradio.grc.core.generator.top_block import TopBlockGenerator
 
-
-BLOCK_MODULES = [
-    'gnuradio.blocks',
-    'gnuradio.analog',
-    'gnuradio.digital',
-    'gnuradio.filter',
-]
-
-
-BLOCK_BASE_CLASSES = (
-    gr.basic_block,
-    gr.sync_block,
-    gr.decim_block,
-    gr.interp_block,
-    gr.hier_block2
-)
+from flowgraph.loader import load_top_block
+from flowgraph.schema import Flowgraph
 
 
 class FlowgraphRunner:
     def __init__(self, flowgraph: Flowgraph, console: Console):
         self.flowgraph = flowgraph
         self.console = console
-        self.tb = gr.top_block()
-        self.blocks: Dict[str, Any] = {}
-        self.block_registry = self._build_block_registry()
+        self.process = None
 
-        self.console.print('🔧  Building flowgraph...')
-        self._build()
+        self.console.print('🔧  Preparing flowgraph...')
 
-    @staticmethod
-    def _is_gr_block(obj: Any) -> bool:
-        try:
-            if isinstance(obj, BLOCK_BASE_CLASSES):
-                return True
-        except:
-            pass
+        self.generated_path = self._generate_code()
 
-        if inspect.isclass(obj):
-            return all(
-                callable(getattr(obj, name, None))
-                for name in ('input_signature', 'output_signature')
-            )
-        return False
+        self.tb_cls = self._create_top_block()
+        self.tb = None
+        if not self._is_gui():
+            self.tb = self.tb_cls()
 
-    def _build_block_registry(self) -> Dict[str, Any]:
-        registry = {}
-        for module_name in BLOCK_MODULES:
-            root = importlib.import_module(module_name)
+    def _generate_code(self) -> Path:
+        platform = Platform(
+            version=gr.version(),
+            version_parts=(
+                gr.major_version(),
+                gr.api_version(),
+                gr.minor_version()),
+            prefs=gr.prefs(),
+            install_prefix=gr.prefix()
+        )
+        platform.build_library()
+        grc_flowgraph = platform.make_flow_graph()
+        grc_flowgraph.import_data(self.flowgraph.model_dump())
+        grc_flowgraph.rewrite()
+        grc_flowgraph.validate()
 
-            for _, mod_name, _ in pkgutil.walk_packages(
-                root.__path__, prefix=root.__name__ + '.'
-            ):
-                try:
-                    module = importlib.import_module(mod_name)
-                    for name, obj in inspect.getmembers(module):
-                        if not inspect.isclass(obj):
-                            continue
+        if not grc_flowgraph.is_valid():
+            raise ValueError('Invalid flowgraph')
 
-                        is_block = False
-                        if (issubclass(obj, BLOCK_BASE_CLASSES)
-                            and obj not in BLOCK_BASE_CLASSES
-                            or self._is_gr_block(obj)
-                        ):
-                            is_block = True
+        generator = TopBlockGenerator(grc_flowgraph, tempfile.gettempdir())
+        generator.write()
+        return Path(generator.file_path)
 
-                        if is_block:
-                            registry[name] = obj
-                except Exception as e:
-                    self.console.print(f'Error loading module {mod_name}: {e}')
-        return registry
+    def _create_top_block(self) -> Type[gr.top_block]:
+        _, top_block_cls = load_top_block(self.generated_path)
+        return top_block_cls
 
-    def _create_block(self, block: Block) -> Any:
-        if block.type not in self.block_registry:
-            raise ValueError(f'Unknown block type: {block.type}')
-
-        block_class = self.block_registry[block.type]
-        try:
-            return block_class(**block.parameters)
-        except Exception as e:
-            raise ValueError(f'Error creating block {block.name}: {e}')
-
-    def _build(self):
-        for block in self.flowgraph.blocks:
-            self.blocks[block.id] = self._create_block(block)
-
-        for conn in self.flowgraph.connections:
-            src_id = conn['from'].split(':')[0]
-            dst_id = conn['to'].split(':')[0]
-            src_block = self.blocks.get(src_id)
-            dst_block = self.blocks.get(dst_id)
-            self.tb.connect(src_block, dst_block)
-
-    def get_block(self, block_id: str) -> Any:
-        return self.blocks.get(block_id)
+    def _is_gui(self) -> bool:
+        parameters = self.flowgraph.options['parameters']
+        return parameters.get('generate_options') == 'qt_gui'
 
     def start(self):
         self.console.print('▶️  Starting flowgraph...')
