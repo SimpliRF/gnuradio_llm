@@ -6,8 +6,6 @@
 import sys
 import argparse
 
-from pathlib import Path
-
 from rich.console import Console
 from rich.tree import Tree
 from rich.table import Table
@@ -21,7 +19,6 @@ from flowgraph.schema import Flowgraph, FlowgraphAction
 from flowgraph.controller import FlowgraphController
 
 from llm.inference import ModelEngine
-from llm.tune import ModelTrainer
 
 
 def draw_flowgraph_tree(console: Console, flowgraph: Flowgraph):
@@ -81,39 +78,10 @@ def arg_parser() -> argparse.ArgumentParser:
         help='Maximum number of attempts for generating a valid response'
     )
     parser.add_argument(
-        '--train', action='store_true',
-        help='Run in training mode (LoRA on CPU, QLoRA on CUDA if available)'
-    )
-    parser.add_argument(
-        '--model', default='Qwen/Qwen2.5-0.5B-Instruct', type=str,
-        help='The model name to load (set to output for tuned model)'
-    )
-    parser.add_argument(
-        '--dataset', default='dataset', type=Path,
-        help='Directory containing training samples (*.json)'
-    )
-    parser.add_argument(
-        '--output', default='output', type=Path,
-        help='Directory to save model outputs'
+        '--model', default='output', type=str,
+        help='The model name to load (default is the tuned output model)'
     )
     return parser
-
-
-def main_train(args: argparse.Namespace, console: Console) -> int:
-    console.print('[bold yellow]Training mode activated...[/bold yellow]')
-
-    if not args.dataset.exists():
-        console.print('[bold red]❌ Dataset directory does not exist:[/bold red] {args.dataset}')
-        return 1
-
-    args.output.mkdir(parents=True, exist_ok=True)
-
-    trainer = ModelTrainer(dataset_dir=args.dataset, output_dir=args.output)
-    trainer.train()
-
-    console.print('[bold green]✔ Training complete![/bold green]')
-    console.print(f'[dim]Model saved to: {args.output}[/dim]')
-    return 0
 
 
 def main_entry() -> int:
@@ -121,8 +89,6 @@ def main_entry() -> int:
     args = parser.parse_args()
 
     console = Console()
-    if args.train:
-        return main_train(args, console)
 
     console.print('[bold cyan] 🛰️  GNU Radio CLI Assistant[/bold cyan]')
     console.print('Type a description of a flowgraph you want to build.')
