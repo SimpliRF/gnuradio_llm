@@ -3,7 +3,6 @@
 #
 
 import pytest
-import json
 
 from llm.utils import extract_json_from_text
 

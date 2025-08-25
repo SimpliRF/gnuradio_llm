@@ -41,11 +41,13 @@ def generate_prompt(action: Action) -> str:
             return (f'Set the parameter {action.parameter} of block '
                     f'{action.block_id} to {action.value}')
         case _ if action.action == 'set':
-            return (f'Set the {action.method} with the arguments {action.args} '
-                    f'and {action.kwargs}')
+            return (f'Set the {action.method} method with the '
+                    f'positional arguments: {action.args}, '
+                    f'and keyword arguments: {action.kwargs}')
         case _ if action.action == 'get':
-            return (f'Get the {action.method} with the arguments {action.args} '
-                    f'and {action.kwargs}')
+            return (f'Get the {action.method} method with the '
+                    f'positional arguments: {action.args}, '
+                    f'and keyword arguments: {action.kwargs}')
         case _:
             return f'Perform the action {action.action}'
 

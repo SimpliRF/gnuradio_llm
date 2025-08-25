@@ -2,7 +2,7 @@
 # This file is part of the GNU Radio LLM project.
 #
 
-from typing import Literal, Optional, List, Dict, Union, Any
+from typing import Literal, List, Dict, Union, Any
 from pydantic import BaseModel, Field
 from datetime import datetime
 
