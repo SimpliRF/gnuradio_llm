@@ -50,6 +50,13 @@ Data is saved by default to the `traces` directory, which can then be used
 to feed the `apps/gen_dataset.py` tool. By default the final dataset output
 is placed in `datasets`.
 
+To build the model, utilize the `apps/gen_model.py` script.
+
+In summary, a typical fine-tuning workflow looks like this:
+* Generate traces with GRC launched with `grc_dataset_logger/launch_grc.py`
+* Generate a dataset from traces with `app/gen_dataset.py`
+* Produce a fine-tuned model after training with `app/gen_model.py`
+
 ## GPL License
 ```
 Copyright (c) 2025 SimpliRF, LLC.

@@ -71,7 +71,8 @@ def build_chained_prompt(tokenizer,
                          include_schema: bool = False,
                          generation_prompt: bool = True) -> str:
     """
-    Build a chained prompt from a sequence of (user_prompt, completion_json) pairs.
+    Build a chained prompt from a sequence of (user_prompt, completion_json)
+    pairs.
     """
     if hasattr(tokenizer, 'apply_chat_template'):
         messages = [
