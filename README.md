@@ -46,6 +46,10 @@ To launch GRC with the logger enabled, simply run the following script:
 ./grc_dataset_logger/launch_grc.py
 ```
 
+Data is saved by default to the `traces` directory, which can then be used
+to feed the `apps/gen_dataset.py` tool. By default the final dataset output
+is placed in `datasets`.
+
 ## GPL License
 ```
 Copyright (c) 2025 SimpliRF, LLC.
