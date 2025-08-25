@@ -99,7 +99,8 @@ class ModelEngine:
             top_k=None
         )
         decoded = self.tokenizer.decode(output[0], skip_special_tokens=True)
-        return extract_json_from_text(decoded)
+        result = extract_json_from_text(decoded)
+        return result[-1] if result else ''
 
     def retry_with_feedback(self,
                             user_prompt: str,

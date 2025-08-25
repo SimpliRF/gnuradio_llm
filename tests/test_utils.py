@@ -10,12 +10,24 @@ from llm.utils import extract_json_from_text
 def test_extract_valid_json():
     text = 'Here is your result:\n\n{ "foo": 1, "bar": 2 }'
     result = extract_json_from_text(text)
-    assert isinstance(result, str)
-    assert '"foo": 1' in result
-    assert '"bar": 2' in result
+    assert isinstance(result, list)
+    assert len(result) == 1
+    assert 'foo' in result[0]
+    assert 'bar' in result[0]
+
+    text = 'Another one:\n\n{ "foo": 1, "bar": 2 }, {"derp": 3, "herp": 4}\n'
+    result = extract_json_from_text(text)
+    assert isinstance(result, list)
+    assert len(result) == 2
+    assert 'foo' in result[0]
+    assert 'bar' in result[0]
+    assert 'derp' in result[1]
+    assert 'herp' in result[1]
 
 
 def test_extract_invalid_json():
-    with pytest.raises(ValueError):
-        text = 'Here is your result:\n\n{ "foo": 1, "bar": 2 '
-        extract_json_from_text(text)
+    text = 'Here is your result:\n\n{ "foo": 1, "bar": 2 '
+    result = extract_json_from_text(text)
+
+    assert isinstance(result, list)
+    assert len(result) == 0
