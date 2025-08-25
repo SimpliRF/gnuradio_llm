@@ -61,9 +61,11 @@ def build_prompt(tokenizer,
 
     system_prompt = get_system_prompt(include_schema)
     if generation_prompt:
-        return f'{system_prompt}\n\n### Prompt: {user_prompt}\n\n### Completion: '
+        return (f'{system_prompt}\n\n### Prompt: '
+                f'{user_prompt}\n\n### Completion: ')
     else:
-        return f'{system_prompt}\n\n### Prompt: {user_prompt}\n\n### Completion: {completion_json}'
+        return (f'{system_prompt}\n\n### Prompt: '
+                f'{user_prompt}\n\n### Completion: {completion_json}')
 
 
 def build_chained_prompt(tokenizer,

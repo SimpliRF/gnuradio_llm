@@ -57,7 +57,7 @@ class FlowgraphController:
         self.flowgraph = None
         self.state = 'idle'
         self.start_time = None
-        self.console.print('🔄  Flowgraph reset...')
+        self.console.print('🔄 Flowgraph reset...')
 
     def handle_action(self, action: FlowgraphAction) -> str:
         if not self.runner:

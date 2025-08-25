@@ -24,7 +24,7 @@ class FlowgraphRunner:
         self.console = console
         self.process = None
 
-        self.console.print('🔧  Preparing flowgraph...')
+        self.console.print('🔧 Preparing flowgraph...')
 
         self.generated_path = self._generate_code()
 
@@ -65,16 +65,16 @@ class FlowgraphRunner:
         return parameters.get('generate_options') == 'qt_gui'
 
     def start(self):
-        self.console.print('▶️  Starting flowgraph...')
+        self.console.print('▶️ Starting flowgraph...')
         self.tb.start()
 
     def run(self):
-        self.console.print('🔁  Running flowgraph...')
+        self.console.print('🔁 Running flowgraph...')
         try:
             self.tb.run()
         except Exception as e:
             self.console.print(f'Error running flowgraph: {e}')
 
     def stop(self):
-        self.console.print('⏹️  Stopping flowgraph...')
+        self.console.print('⏹️ Stopping flowgraph...')
         self.tb.stop()
