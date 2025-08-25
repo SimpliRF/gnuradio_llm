@@ -22,7 +22,7 @@ def arg_parser() -> argparse.ArgumentParser:
         help='Directory containing GRC trace data'
     )
     parser.add_argument(
-        '--dataset', default='dataset', type=Path,
+        '--dataset', default='datasets', type=Path,
         help='Directory to save the generated dataset'
     )
     return parser
@@ -33,7 +33,6 @@ def main_entry():
     args = parser.parse_args()
 
     build_datasets(args.traces, args.dataset)
-
     return 0
 
 

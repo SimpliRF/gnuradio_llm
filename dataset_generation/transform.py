@@ -9,7 +9,6 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from dataset_generation.schema import Action
-
 from dataset_generation.flowgraph import normalize_flowgraph_entry
 from dataset_generation.runtime import normalize_runtime_entry
 
@@ -31,9 +30,13 @@ def generate_prompt(action: Action) -> str:
         case _ if action.action == 'remove_block':
             return f'Remove the block {action.block_id} from the flowgraph'
         case _ if action.action == 'connect':
-            return f'Connect block {action.src} to block {action.dst}'
+            return (f'Connect the block {action.src[0]} at '
+                    f'port {action.src[1]} to {action.dst[0]} '
+                    f'at port {action.dst[1]}')
         case _ if action.action == 'disconnect':
-            return f'Disconnect block {action.src} from block {action.dst}'
+            return (f'Disconnect the block {action.src[0]} at '
+                    f'port {action.src[1]} to {action.dst[0]} '
+                    f'at port {action.dst[1]}')
         case _ if action.action == 'parameter':
             return (f'Set the parameter {action.parameter} of block '
                     f'{action.block_id} to {action.value}')
@@ -72,8 +75,8 @@ def build_datasets(trace_dir: Path, dataset_dir: Path):
 
                 entry = json.loads(line)
                 actions = normalize_flowgraph_entry(line)
-                snapshot = entry['snapshot_1']
-                flowgraph = Flowgraph.model_validate(snapshot)
+                flowgraph = Flowgraph(**entry['snapshot_1'])
+
                 for action in actions:
                     history.append({
                         'prompt': generate_prompt(action),
