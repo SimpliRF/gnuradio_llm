@@ -38,4 +38,4 @@ def test_flowgraph_invalid():
     with pytest.raises(Exception) as e:
         Flowgraph(**graph)
 
-        assert "missing" in str(e.value), "Expected validation error for missing parameters"
+        assert 'missing' in str(e.value)
