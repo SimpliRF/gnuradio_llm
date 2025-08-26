@@ -10,38 +10,21 @@ from typing import Any, Dict, Iterator
 
 from datasets import Dataset
 
-from flowgraph.schema import Flowgraph, FlowgraphAction
-
 
 SYSTEM_PROMPT_PREFIX = '''
 You are an assistant that generates and controls GNU Radio flowgraphs.
-You must respond only with JSON matching one of the following schemas:
-- Flowgraph: when creating or modifying a flowgraph.
-- FlowgraphAction: when performing control actions like start, stop, and more.
 Do not include any explanations or extra text. Return exactly ONE JSON object.
 '''
 
 
-def get_system_prompt(include_schema: bool = False) -> str:
+def get_system_prompt() -> str:
     system_prompt = f'{SYSTEM_PROMPT_PREFIX}\n\n'
-    if not include_schema:
-        return system_prompt
-
-    flowgraph_schema = json.dumps(
-        Flowgraph.model_json_schema(), separators=(',', ':')
-    )
-    action_schema = json.dumps(
-        FlowgraphAction.model_json_schema(), separators=(',', ':')
-    )
-    return (f'{system_prompt}' +
-            f'### Flowgraph Schema:\n{flowgraph_schema}\n\n' +
-            f'### Action Schema:\n{action_schema}\n')
+    return system_prompt
 
 
 def build_prompt(tokenizer,
                  user_prompt: str,
                  completion_json: str = '',
-                 include_schema: bool = False,
                  generation_prompt: bool = True) -> str:
     """
     Build a consistent prompt for inference.
@@ -49,7 +32,7 @@ def build_prompt(tokenizer,
     completion_json = completion_json.strip()
     if hasattr(tokenizer, 'apply_chat_template'):
         messages = [
-            {'role': 'system', 'content': get_system_prompt(include_schema)},
+            {'role': 'system', 'content': get_system_prompt()},
             {'role': 'user', 'content': user_prompt},
         ]
 
@@ -61,7 +44,7 @@ def build_prompt(tokenizer,
         )
         return prompt
 
-    system_prompt = get_system_prompt(include_schema)
+    system_prompt = get_system_prompt()
     if generation_prompt:
         return (f'{system_prompt}\n\n### Prompt: '
                 f'{user_prompt}\n\n### Completion: ')
@@ -72,7 +55,6 @@ def build_prompt(tokenizer,
 
 def build_chained_prompt(tokenizer,
                          history: list[tuple[str, str]],
-                         include_schema: bool = False,
                          generation_prompt: bool = True) -> str:
     """
     Build a chained prompt from a sequence of (user_prompt, completion_json)
@@ -80,7 +62,7 @@ def build_chained_prompt(tokenizer,
     """
     if hasattr(tokenizer, 'apply_chat_template'):
         messages = [
-            {'role': 'system', 'content': get_system_prompt(include_schema)}
+            {'role': 'system', 'content': get_system_prompt()}
         ]
 
         for user_prompt, completion_json in history[:-1]:
@@ -100,7 +82,7 @@ def build_chained_prompt(tokenizer,
         )
         return prompt
 
-    system_prompt = get_system_prompt(include_schema)
+    system_prompt = get_system_prompt()
     result = system_prompt + '\n\n'
     for user_prompt, completion_json in history[:-1]:
         result += f'### Prompt: {user_prompt}\n\n'
@@ -160,14 +142,4 @@ def load_dataset(dataset_dir: str, cache_dir: str = 'dataset_cache') -> Dataset:
         cache_dir=cache_dir,
         keep_in_memory=False
     )
-
-    def add_schema_flag(example, index):
-        example['include_schema'] = (index == 0)
-        return example
-
-    return dataset.map( # type: ignore
-        add_schema_flag,
-        with_indices=True,
-        batch_size=8,
-        keep_in_memory=False
-    )
+    return dataset # type: ignore

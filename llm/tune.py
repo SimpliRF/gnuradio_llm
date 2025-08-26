@@ -88,19 +88,15 @@ class ModelTrainer:
     @staticmethod
     def _make_formatting_func(tokenizer):
         def format_batch(batch):
-            histories = batch['history']
-            schema_flags = batch.get('include_schema', [False] * len(histories))
-
             prompt_list = []
-            for chain, flag in zip(histories, schema_flags):
+            for chain in batch['history']:
                 history_pairs = [
                     (pair['prompt'], pair['completion']) for pair in chain
                 ]
                 prompt = build_chained_prompt(
                     tokenizer,
                     history_pairs,
-                    generation_prompt=False,
-                    include_schema=bool(flag)
+                    generation_prompt=False
                 )
                 prompt_list.append(prompt)
             return prompt_list
@@ -128,7 +124,7 @@ class ModelTrainer:
         sum_over = sum(l > max_seq_length for l in lengths)
         if sum_over > 0:
             raise RuntimeError((f'Found {sum_over} examples over the max length '
-                                f'of {max_seq_length} tokens'))
+                                f'of {max_seq_length} tokens {lengths}'))
 
     def train(self,
               max_seq_length: int = 2048,
@@ -144,7 +140,6 @@ class ModelTrainer:
                 num_train_epochs=num_train_epochs,
                 learning_rate=learning_rate,
                 fp16=True,
-                lr_scheduler_type='cosine',
                 warmup_ratio=0.0,
                 weight_decay=0.0,
                 logging_steps=10,
@@ -159,7 +154,6 @@ class ModelTrainer:
                 num_train_epochs=num_train_epochs,
                 learning_rate=learning_rate,
                 fp16=False,
-                lr_scheduler_type='cosine',
                 warmup_ratio=0.0,
                 weight_decay=0.0,
                 logging_steps=10,
@@ -173,6 +167,8 @@ class ModelTrainer:
             train_dataset=dataset,
             args=config,
         )
+
+        self._check_sequence_lengths(dataset, self.tokenizer, max_seq_length)
 
         trainer.train()
         trainer.save_model(self.output_dir)

@@ -8,13 +8,6 @@ import json
 from pathlib import Path
 
 from flowgraph.schema import Flowgraph
-from llm.prompts import get_system_prompt
-
-
-def test_system_prompt_contains_schema():
-    prompt = get_system_prompt(include_schema=True)
-    assert "Flowgraph Schema" in prompt
-    assert "Action Schema" in prompt
 
 
 def test_flowgraph_validation():
