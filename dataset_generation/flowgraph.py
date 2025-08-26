@@ -9,6 +9,7 @@ from typing import Set, Tuple, List, Any
 from datetime import datetime
 
 from dataset_generation.schema import (
+    NewFlowgraphAction,
     AddBlockAction,
     RemoveBlockAction,
     ParameterAction,
@@ -48,6 +49,15 @@ def flowgraph_diff(snapshot_0: dict[str, Any],
     block_keys_1 = set(blocks_1.keys())
 
     ts = datetime.fromisoformat(timestamp)
+
+    if 'options' not in snapshot_0:
+        changes.append(NewFlowgraphAction(
+            timestamp=ts,
+            flowgraph_id=flowgraph_id,
+            source='flowgraph'
+        ))
+        return changes
+
     for block_id in block_keys_1 - block_keys_0:
         block = blocks_1[block_id]
         changes.append(AddBlockAction(

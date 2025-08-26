@@ -6,7 +6,7 @@ import os
 import json
 import base64
 
-from typing import Any, Dict, Iterator
+from typing import Any, Dict, Iterator, Optional
 
 from datasets import Dataset
 
@@ -25,14 +25,21 @@ def get_system_prompt() -> str:
 def build_prompt(tokenizer,
                  user_prompt: str,
                  completion_json: str = '',
+                 flowgraph_json: Optional[str] = None,
                  generation_prompt: bool = True) -> str:
     """
     Build a consistent prompt for inference.
     """
     completion_json = completion_json.strip()
+    system_prompt = get_system_prompt()
+    if flowgraph_json:
+        system_prompt += f'Here is the current flowgraph:\n{flowgraph_json}\n\n'
+    else:
+        system_prompt += 'Start with a new flowgraph with a variable sample rate block.\n\n'
+
     if hasattr(tokenizer, 'apply_chat_template'):
         messages = [
-            {'role': 'system', 'content': get_system_prompt()},
+            {'role': 'system', 'content': system_prompt},
             {'role': 'user', 'content': user_prompt},
         ]
 
@@ -44,7 +51,6 @@ def build_prompt(tokenizer,
         )
         return prompt
 
-    system_prompt = get_system_prompt()
     if generation_prompt:
         return (f'{system_prompt}\n\n### Prompt: '
                 f'{user_prompt}\n\n### Completion: ')
@@ -54,7 +60,7 @@ def build_prompt(tokenizer,
 
 
 def build_chained_prompt(tokenizer,
-                         history: list[tuple[str, str]],
+                         history: list[tuple[str, str, str]],
                          generation_prompt: bool = True) -> str:
     """
     Build a chained prompt from a sequence of (user_prompt, completion_json)
@@ -65,8 +71,11 @@ def build_chained_prompt(tokenizer,
             {'role': 'system', 'content': get_system_prompt()}
         ]
 
-        for user_prompt, completion_json in history[:-1]:
+        for user_prompt, context_json, completion_json in history[:-1]:
             completion_json = completion_json.strip()
+            if len(context_json):
+                system_prompt = f'Here is the current flowgraph:\n{context_json}\n\n'
+                messages.append({'role': 'system', 'content': system_prompt})
             messages.append({'role': 'user', 'content': user_prompt})
             messages.append({'role': 'assistant', 'content': completion_json})
 
@@ -84,7 +93,7 @@ def build_chained_prompt(tokenizer,
 
     system_prompt = get_system_prompt()
     result = system_prompt + '\n\n'
-    for user_prompt, completion_json in history[:-1]:
+    for user_prompt, context_json, completion_json in history[:-1]:
         result += f'### Prompt: {user_prompt}\n\n'
         result += f'### Completion: {completion_json.strip()}\n\n'
 
@@ -125,8 +134,12 @@ def load_dataset_jsonl(dataset_dir: str,
 
                 history = []
                 for r in data:
+                    context = r.get('context', '')
+                    if len(context):
+                        context = decode_completion(r['context'])
                     history.append({
                         'prompt': r['prompt'],
+                        'context': context,
                         'completion': decode_completion(r['completion']),
                     })
 
@@ -144,7 +157,7 @@ def load_dataset_jsonl(dataset_dir: str,
 
 def load_dataset(dataset_dir: str,
                  cache_dir: str = 'dataset_cache',
-                 window_size: int = 3) -> Dataset:
+                 window_size: int = 2) -> Dataset:
     """
     Load the dataset from the specified directory.
     """

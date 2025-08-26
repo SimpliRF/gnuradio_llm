@@ -14,6 +14,10 @@ class BaseAction(BaseModel):
     source: Literal['flowgraph', 'runtime']
 
 
+class NewFlowgraphAction(BaseAction):
+    action: Literal['new_flowgraph'] = Field(default='new_flowgraph')
+
+
 class AddBlockAction(BaseAction):
     action: Literal['add_block'] = Field(default='add_block')
     block_id: str

@@ -25,6 +25,8 @@ def generate_prompt(action: Action) -> str:
     Simple prompt generation until we can add some diversity.
     """
     match action:
+        case _ if action.action == 'new_flowgraph':
+            return f'Create a new flowgraph with ID {action.flowgraph_id}'
         case _ if action.action == 'add_block':
             return f'Add a new block {action.block_id} to the flowgraph'
         case _ if action.action == 'remove_block':
@@ -77,13 +79,24 @@ def build_datasets(trace_dir: Path, dataset_dir: Path):
 
                 entry = json.loads(line)
                 actions = normalize_flowgraph_entry(line)
-                flowgraph = Flowgraph(**entry['snapshot_1'])
-                flowgraph = minimize_flowgraph(flowgraph)
+
+                flowgraph_0_json = entry['snapshot_0']
+                flowgraph_0 = None
+                if flowgraph_0_json:
+                    flowgraph_0 = Flowgraph(**flowgraph_0_json)
+                    flowgraph_0 = minimize_flowgraph(flowgraph_0)
+
+                flowgraph_1 = Flowgraph(**entry['snapshot_1'])
+                flowgraph_1 = minimize_flowgraph(flowgraph_1)
 
                 for action in actions:
+                    context = ''
+                    if flowgraph_0:
+                        context = encode_completion(flowgraph_0)
                     history.append({
                         'prompt': generate_prompt(action),
-                        'completion': encode_completion(flowgraph)
+                        'context': context,
+                        'completion': encode_completion(flowgraph_1)
                     })
 
         if history:

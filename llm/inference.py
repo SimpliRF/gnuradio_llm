@@ -5,6 +5,7 @@
 import os
 import torch
 
+from typing import Optional
 from pathlib import Path
 
 from llm.prompts import build_prompt
@@ -65,9 +66,15 @@ class ModelEngine:
         self.model.config.use_cache = True
         self.model.eval()
 
-    def generate(self, user_prompt: str, max_tokens: int = 2048) -> str:
+    def generate(self,
+                 user_prompt: str,
+                 flowgraph_json: Optional[str] = None,
+                 max_tokens: int = 2048) -> str:
         prompt = build_prompt(
-            self.tokenizer, user_prompt, generation_prompt=True
+            tokenizer=self.tokenizer,
+            user_prompt=user_prompt,
+            generation_prompt=True,
+            flowgraph_json=flowgraph_json
         )
         inputs = self.tokenizer(
             prompt,

@@ -91,7 +91,8 @@ class ModelTrainer:
             prompt_list = []
             for chain in batch['history']:
                 history_pairs = [
-                    (pair['prompt'], pair['completion']) for pair in chain
+                    (pair['prompt'], pair['context'], pair['completion'])
+                    for pair in chain
                 ]
                 prompt = build_chained_prompt(
                     tokenizer,

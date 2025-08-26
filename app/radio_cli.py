@@ -97,6 +97,8 @@ def main_entry() -> int:
     engine = ModelEngine(fallback_model_name=args.model)
     controller = FlowgraphController(console)
 
+    current_flowgraph = None
+
     while True:
         try:
             user_input = prompt([('class:prompt', '» ')]).strip()
@@ -111,7 +113,7 @@ def main_entry() -> int:
         if not user_input:
             continue
 
-        response = engine.generate(user_input)
+        response = engine.generate(user_input, current_flowgraph)
         console.print(f'[bold blue]LLM Response:[/bold blue]\n{response}')
 
         for attempt in range(args.max_attempts):
@@ -120,17 +122,16 @@ def main_entry() -> int:
                 try:
                     flowgraph = Flowgraph.model_validate_json(response)
 
+                    current_flowgraph = response
+
                     console.print('[bold green]✔ Flowgraph successfully built![/bold green]')
                     console.print('[dim]Generated JSON:[/dim]')
                     console.print_json(response)
 
-                    controller.load_flowgraph(flowgraph)
-
-                    if args.show_tree:
+                    if args.tree:
                         draw_flowgraph_tree(console, flowgraph)
                     else:
                         draw_flowgraph_table(console, flowgraph)
-
                     break
                 except ValidationError:
                     console.print('[bold red]Must not be a flowgraph JSON[/bold red]')
@@ -138,7 +139,6 @@ def main_entry() -> int:
                 # Try to parse the output as a flowgraph action
                 try:
                     action = FlowgraphAction.model_validate_json(response)
-                    controller.handle_action(action)
                     console.print('[green]✔ Action executed[/green]')
                     break
                 except ValidationError:
