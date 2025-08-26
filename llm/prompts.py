@@ -8,7 +8,7 @@ import base64
 
 from typing import Any, Dict, Iterator
 
-from datasets import Dataset, Features, Sequence, Value
+from datasets import Dataset
 
 from flowgraph.schema import Flowgraph, FlowgraphAction
 
@@ -165,4 +165,9 @@ def load_dataset(dataset_dir: str, cache_dir: str = 'dataset_cache') -> Dataset:
         example['include_schema'] = (index == 0)
         return example
 
-    return dataset.map(add_schema_flag, with_indices=True) # type: ignore
+    return dataset.map( # type: ignore
+        add_schema_flag,
+        with_indices=True,
+        batch_size=8,
+        keep_in_memory=False
+    )

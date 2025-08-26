@@ -103,15 +103,42 @@ class ModelTrainer:
                     include_schema=bool(flag)
                 )
                 prompt_list.append(prompt)
-            return {'text': prompt_list}
+            return prompt_list
         return format_batch
 
-    def train(self, learning_rate: float = 2e-4, num_train_epochs: int = 25):
+    @staticmethod
+    def _check_sequence_lengths(dataset, tokenizer, max_seq_length: int):
+        """
+        This method is just used for debugging.
+        """
+        lengths = []
+        for i, example in enumerate(dataset):
+            if i >= max_seq_length:
+                break
+            prompt_history = example['history']
+            pairs = [(p["prompt"], p["completion"]) for p in prompt_history]
+            text = '\n'.join(f'## Prompt: {p}\n## Completion: {c}' for p, c in pairs)
+
+            token_count = len(tokenizer(text).input_ids)
+            lengths.append(token_count)
+
+        if not lengths:
+            return
+
+        sum_over = sum(l > max_seq_length for l in lengths)
+        if sum_over > 0:
+            raise RuntimeError((f'Found {sum_over} examples over the max length '
+                                f'of {max_seq_length} tokens'))
+
+    def train(self,
+              max_seq_length: int = 2048,
+              learning_rate: float = 2e-4,
+              num_train_epochs: int = 25):
         dataset = load_dataset(self.dataset_dir)
         if torch.cuda.is_available():
             config = SFTConfig(
                 output_dir=self.output_dir,
-                max_seq_length=4096,
+                max_seq_length=max_seq_length,
                 per_device_train_batch_size=2,
                 gradient_accumulation_steps=4,
                 num_train_epochs=num_train_epochs,
@@ -126,7 +153,7 @@ class ModelTrainer:
         else:
             config = SFTConfig(
                 output_dir=self.output_dir,
-                max_seq_length=4096,
+                max_seq_length=max_seq_length,
                 per_device_train_batch_size=1,
                 gradient_accumulation_steps=1,
                 num_train_epochs=num_train_epochs,
@@ -146,5 +173,6 @@ class ModelTrainer:
             train_dataset=dataset,
             args=config,
         )
+
         trainer.train()
         trainer.save_model(self.output_dir)
