@@ -14,7 +14,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers.utils.quantization_config import BitsAndBytesConfig
 from trl import SFTTrainer, SFTConfig
 
-from llm.prompts import load_dataset, build_chained_prompt
+from llm.prompts import build_chained_prompt
+from llm.dataset import load_dataset
 
 
 class ModelTrainer:
@@ -30,7 +31,6 @@ class ModelTrainer:
         self.output_dir = output_dir
         self.hf_token = os.environ.get(hf_token_env, None)
 
-        self.included_schema = False
         self.model = self._load_model()
 
     def _apply_lora(self, model) -> Any:
@@ -90,48 +90,30 @@ class ModelTrainer:
         def format_batch(batch):
             prompt_list = []
             for chain in batch['history']:
-                history_pairs = [
+                pairs = [
                     (pair['prompt'], pair['context'], pair['completion'])
                     for pair in chain
                 ]
                 prompt = build_chained_prompt(
                     tokenizer,
-                    history_pairs,
+                    pairs,
                     generation_prompt=False
                 )
                 prompt_list.append(prompt)
             return prompt_list
         return format_batch
 
-    @staticmethod
-    def _check_sequence_lengths(dataset, tokenizer, max_seq_length: int):
-        """
-        This method is just used for debugging.
-        """
-        lengths = []
-        for i, example in enumerate(dataset):
-            if i >= max_seq_length:
-                break
-            prompt_history = example['history']
-            pairs = [(p["prompt"], p["completion"]) for p in prompt_history]
-            text = '\n'.join(f'## Prompt: {p}\n## Completion: {c}' for p, c in pairs)
-
-            token_count = len(tokenizer(text).input_ids)
-            lengths.append(token_count)
-
-        if not lengths:
-            return
-
-        sum_over = sum(l > max_seq_length for l in lengths)
-        if sum_over > 0:
-            raise RuntimeError((f'Found {sum_over} examples over the max length '
-                                f'of {max_seq_length} tokens {lengths}'))
-
     def train(self,
+              window_size: int = 1,
               max_seq_length: int = 2048,
               learning_rate: float = 2e-4,
               num_train_epochs: int = 10):
-        dataset = load_dataset(self.dataset_dir)
+
+        dataset = load_dataset(
+            dataset_dir=self.dataset_dir,
+            window_size=window_size
+        )
+
         if torch.cuda.is_available():
             config = SFTConfig(
                 output_dir=self.output_dir,
@@ -146,6 +128,7 @@ class ModelTrainer:
                 weight_decay=0.0,
                 logging_steps=10,
                 save_steps=100,
+                packing=True
             )
         else:
             config = SFTConfig(
@@ -161,6 +144,7 @@ class ModelTrainer:
                 weight_decay=0.0,
                 logging_steps=10,
                 save_steps=100,
+                packing=True
             )
 
         trainer = SFTTrainer(
@@ -170,8 +154,6 @@ class ModelTrainer:
             train_dataset=dataset,
             args=config,
         )
-
-        self._check_sequence_lengths(dataset, self.tokenizer, max_seq_length)
 
         trainer.train()
         trainer.save_model(self.output_dir)
