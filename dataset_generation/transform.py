@@ -12,7 +12,7 @@ from dataset_generation.schema import Action
 from dataset_generation.flowgraph import normalize_flowgraph_entry
 from dataset_generation.runtime import normalize_runtime_entry
 
-from flowgraph.schema import Flowgraph
+from flowgraph.schema import Flowgraph, minimize_flowgraph
 
 
 def encode_completion(data: BaseModel) -> str:
@@ -78,6 +78,7 @@ def build_datasets(trace_dir: Path, dataset_dir: Path):
                 entry = json.loads(line)
                 actions = normalize_flowgraph_entry(line)
                 flowgraph = Flowgraph(**entry['snapshot_1'])
+                flowgraph = minimize_flowgraph(flowgraph)
 
                 for action in actions:
                     history.append({
