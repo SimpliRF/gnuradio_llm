@@ -129,7 +129,7 @@ class ModelTrainer:
     def train(self,
               max_seq_length: int = 2048,
               learning_rate: float = 2e-4,
-              num_train_epochs: int = 25):
+              num_train_epochs: int = 10):
         dataset = load_dataset(self.dataset_dir)
         if torch.cuda.is_available():
             config = SFTConfig(
@@ -139,6 +139,7 @@ class ModelTrainer:
                 gradient_accumulation_steps=4,
                 num_train_epochs=num_train_epochs,
                 learning_rate=learning_rate,
+                lr_scheduler_type='cosine',
                 fp16=True,
                 warmup_ratio=0.0,
                 weight_decay=0.0,
@@ -153,6 +154,7 @@ class ModelTrainer:
                 gradient_accumulation_steps=1,
                 num_train_epochs=num_train_epochs,
                 learning_rate=learning_rate,
+                lr_scheduler_type='cosine',
                 fp16=False,
                 warmup_ratio=0.0,
                 weight_decay=0.0,

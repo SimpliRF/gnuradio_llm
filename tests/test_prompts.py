@@ -96,3 +96,7 @@ def test_load_dataset():
     assert 'prompt' in pair
     assert 'completion' in pair
 
+    assert 'generate a null sink' in pair['prompt']
+    assert '"blocks":[' in pair['completion']
+    assert '"connections":[' in pair['completion']
+

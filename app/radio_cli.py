@@ -144,7 +144,7 @@ def main_entry() -> int:
                 except ValidationError:
                     console.print(f'[bold red]Must not be a flowgraph action[/bold red]')
 
-                raise ValueError('Invalid response fromat from LLM...')
+                raise ValueError('Invalid response format from LLM...')
 
             except Exception as e:
                 console.print(f'[bold red]❌ Error processing response:[/bold red] {e}')

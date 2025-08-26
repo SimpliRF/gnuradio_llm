@@ -4,6 +4,9 @@
 #
 
 import tempfile
+import multiprocessing as mp
+
+from multiprocessing import connection
 
 from typing import Type
 from pathlib import Path
@@ -26,14 +29,14 @@ class FlowgraphRunner:
 
         self.console.print('🔧 Preparing flowgraph...')
 
-        self.generated_path = self._generate_code()
+        self.generated_path = self._generate_flowgraph()
 
         self.tb_cls = self._create_top_block()
         self.tb = None
         if not self._is_gui():
             self.tb = self.tb_cls()
 
-    def _generate_code(self) -> Path:
+    def _generate_flowgraph(self) -> Path:
         platform = Platform(
             version=gr.version(),
             version_parts=(

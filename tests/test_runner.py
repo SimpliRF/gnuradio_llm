@@ -24,6 +24,7 @@ def test_runner_from_valid_json():
 
     assert runner.tb is not None
     assert runner.generated_path is not None
+    assert runner._is_gui() is False
 
     runner.tb.start()
     runner.tb.stop()

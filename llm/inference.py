@@ -105,7 +105,7 @@ class ModelEngine:
     def retry_with_feedback(self,
                             user_prompt: str,
                             feedback: str,
-                            max_tokens: int = 4096) -> str:
+                            max_tokens: int = 2048) -> str:
         retry_prompt = (
             f'The previous attempt failed with the following feedback:\n{feedback}\n'
             f'Please try again and produce the correct JSON.\n\n'
