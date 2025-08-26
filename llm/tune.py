@@ -8,7 +8,7 @@ import torch
 
 from typing import Any
 
-from peft import LoraConfig
+from peft import LoraConfig # type: ignore
 from peft.mapping import get_peft_model
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers.utils.quantization_config import BitsAndBytesConfig
@@ -103,7 +103,7 @@ class ModelTrainer:
                     include_schema=bool(flag)
                 )
                 prompt_list.append(prompt)
-            return prompt_list
+            return {'text': prompt_list}
         return format_batch
 
     def train(self, learning_rate: float = 2e-4, num_train_epochs: int = 25):

@@ -165,4 +165,4 @@ def load_dataset(dataset_dir: str, cache_dir: str = 'dataset_cache') -> Dataset:
         example['include_schema'] = (index == 0)
         return example
 
-    return dataset.map(add_schema_flag, with_indices=True)
+    return dataset.map(add_schema_flag, with_indices=True) # type: ignore
