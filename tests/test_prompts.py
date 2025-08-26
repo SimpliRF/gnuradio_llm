@@ -70,9 +70,9 @@ def test_build_prompt_with_chat_tokenizer():
 
 
 def test_load_dataset():
-    dataset = load_dataset('tests/mock_data')
+    dataset = load_dataset('tests/mock_datasets')
 
-    assert len(dataset) == 3
+    assert len(dataset) == 1
     assert 'history' in dataset[0]
 
     chain = dataset[0]['history']

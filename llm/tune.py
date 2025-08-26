@@ -106,7 +106,7 @@ class ModelTrainer:
             return prompt_list
         return format_batch
 
-    def train(self, learning_rate: float = 2e-4, num_train_epochs: int = 20):
+    def train(self, learning_rate: float = 2e-4, num_train_epochs: int = 25):
         dataset = load_dataset(self.dataset_dir)
         if torch.cuda.is_available():
             config = SFTConfig(

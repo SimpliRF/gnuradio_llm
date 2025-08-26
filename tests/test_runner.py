@@ -14,7 +14,7 @@ from flowgraph.runner import FlowgraphRunner
 
 
 def test_runner_from_valid_json():
-    graph_path = Path('tests/mock_data/flowgraph_simple.json')
+    graph_path = Path('tests/mock_json/flowgraph_simple.json')
     graph = json.load(graph_path.open())
     flowgraph = Flowgraph(**graph)
 

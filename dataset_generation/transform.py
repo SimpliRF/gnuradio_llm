@@ -106,12 +106,14 @@ def build_datasets(trace_dir: Path, dataset_dir: Path):
         if history:
             actions_dataset.append(history)
 
-    with flowgraphs_dataset_path.open('w') as fp:
-        for history in flowgraphs_dataset:
-            json.dump(history, fp)
-            fp.write('\n')
+    if flowgraphs_dataset:
+        with flowgraphs_dataset_path.open('w') as fp:
+            for history in flowgraphs_dataset:
+                json.dump(history, fp)
+                fp.write('\n')
 
-    with actions_dataset_path.open('w') as fp:
-        for history in actions_dataset:
-            json.dump(history, fp)
-            fp.write('\n')
+    if actions_dataset:
+        with actions_dataset_path.open('w') as fp:
+            for history in actions_dataset:
+                json.dump(history, fp)
+                fp.write('\n')

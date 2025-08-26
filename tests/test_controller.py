@@ -14,7 +14,7 @@ from flowgraph.controller import FlowgraphController
 
 
 def test_flowgraph_controller():
-    graph_path = Path('tests/mock_data/flowgraph_simple.json')
+    graph_path = Path('tests/mock_json/flowgraph_simple.json')
     graph = json.load(graph_path.open())
     flowgraph = Flowgraph(**graph)
 

@@ -6,7 +6,9 @@ import os
 import json
 import base64
 
-from datasets import Dataset
+from typing import Any, Dict, Iterator
+
+from datasets import Dataset, Features, Sequence, Value
 
 from flowgraph.schema import Flowgraph, FlowgraphAction
 
@@ -124,43 +126,43 @@ def decode_completion(completion_json: str) -> str:
     return json.dumps(completion, separators=(',', ':'))
 
 
-def load_dataset(dataset_dir: str) -> Dataset:
+def load_dataset_jsonl(dataset_dir: str) -> Iterator[Dict[str, Any]]:
+    for filename in os.listdir(dataset_dir):
+        if not filename.endswith('.jsonl'):
+            continue
+        path = os.path.join(dataset_dir, filename)
+
+        with open(path, 'r') as fp:
+            for line in fp:
+                line = line.strip()
+                data = json.loads(line)
+
+                if not isinstance(data, list):
+                    continue
+
+                history = []
+                for r in data:
+                    history.append({
+                        'prompt': r['prompt'],
+                        'completion': decode_completion(r['completion']),
+                    })
+                if history:
+                    yield {'history': history}
+
+
+def load_dataset(dataset_dir: str, cache_dir: str = 'dataset_cache') -> Dataset:
     """
     Load the dataset from the specified directory.
     """
-    samples = []
-    for filename in os.listdir(dataset_dir):
-        if not filename.endswith('.json'):
-            continue
-        with open(os.path.join(dataset_dir, filename), 'r') as fp:
-            data = json.load(fp)
+    dataset = Dataset.from_generator(
+        load_dataset_jsonl,
+        gen_kwargs={'dataset_dir': dataset_dir},
+        cache_dir=cache_dir,
+        keep_in_memory=False
+    )
 
-        if not isinstance(data, list):
-            continue
+    def add_schema_flag(example, index):
+        example['include_schema'] = (index == 0)
+        return example
 
-        if isinstance(data[0], list):
-            for chain in data:
-                history = []
-                for r in chain:
-                    history.append({
-                        'prompt': r['prompt'],
-                        'completion': decode_completion(r['completion'])
-                    })
-                samples.append({'history': history})
-        else:
-            history = []
-            for r in data:
-                history.append({
-                    'prompt': r['prompt'],
-                    'completion': decode_completion(r['completion'])
-                })
-            samples.append({'history': history})
-
-    dataset = Dataset.from_list(samples)
-
-    def add_schema_flag(sample, index):
-        sample['include_schema'] = (index == 0)
-        return sample
-
-    dataset = dataset.map(add_schema_flag, with_indices=True)
-    return dataset
+    return dataset.map(add_schema_flag, with_indices=True)
