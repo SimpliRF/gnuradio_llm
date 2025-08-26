@@ -4,7 +4,13 @@
 
 import pytest
 
-from llm.prompts import build_prompt, load_dataset
+from llm.prompts import (
+    build_prompt,
+    load_dataset_jsonl,
+    load_dataset
+)
+
+from typing import Iterator
 
 
 class DummyChatTokenizer:
@@ -67,6 +73,16 @@ def test_build_prompt_with_chat_tokenizer():
 
     assert 'user: Create a flowgraph with a source and a sink' in output
     assert 'ADD_GEN:True' in output
+
+
+def test_load_dataset_jsonl():
+    dataset = load_dataset_jsonl('tests/mock_datasets')
+
+    assert isinstance(dataset, Iterator)
+
+    first_item = next(dataset)
+    assert 'history' in first_item
+    assert isinstance(first_item['history'], list)
 
 
 def test_load_dataset():
