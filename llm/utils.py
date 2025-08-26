@@ -4,10 +4,10 @@
 
 import json
 
-from typing import Any, List, Dict
+from typing import List
 
 
-def extract_json_from_text(text: str) -> List[Dict[str, Any]]:
+def extract_json_from_text(text: str) -> List[str]:
     """
     Extract JSON content from a text string.
     """
@@ -45,9 +45,9 @@ def extract_json_from_text(text: str) -> List[Dict[str, Any]]:
                 if depth == 0 and start_idx is not None:
                     candidate = text[start_idx:i + 1]
                     try:
-                        obj = json.loads(candidate)
-                        if isinstance(obj, dict):
-                            results.append(obj)
+                        check = json.loads(candidate)
+                        if isinstance(check, dict):
+                            results.append(candidate)
                     except json.JSONDecodeError:
                         pass
                     start_idx = None

@@ -65,7 +65,7 @@ class ModelEngine:
         self.model.config.use_cache = True
         self.model.eval()
 
-    def generate(self, user_prompt: str, max_tokens: int = 4096) -> str:
+    def generate(self, user_prompt: str, max_tokens: int = 2048) -> str:
         prompt = build_prompt(
             self.tokenizer, user_prompt, generation_prompt=True
         )
@@ -99,8 +99,8 @@ class ModelEngine:
             top_k=None
         )
         decoded = self.tokenizer.decode(output[0], skip_special_tokens=True)
-        result = extract_json_from_text(decoded)
-        return result[-1] if result else ''
+        results = extract_json_from_text(decoded)
+        return results[-1] if results else ''
 
     def retry_with_feedback(self,
                             user_prompt: str,
