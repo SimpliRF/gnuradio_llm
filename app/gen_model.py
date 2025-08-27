@@ -47,7 +47,11 @@ def main_entry():
 
     args.output.mkdir(parents=True, exist_ok=True)
 
-    trainer = ModelTrainer(dataset_dir=args.dataset, output_dir=args.output)
+    trainer = ModelTrainer(
+        dataset_dir=args.dataset,
+        model_name=args.model,
+        output_dir=args.output
+    )
     trainer.train()
 
     console.print('[bold green]✔ Training complete![/bold green]')

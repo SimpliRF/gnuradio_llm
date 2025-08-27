@@ -20,13 +20,11 @@ from llm.dataset import load_dataset
 
 class ModelTrainer:
     def __init__(self,
-                 model_name: str = 'mistralai/Mistral-7B-Instruct-v0.2',
-                 fallback_model_name: str = 'Qwen/Qwen2.5-0.5B-Instruct',
+                 model_name: str = 'Qwen/Qwen2-1.5B-Chat',
                  dataset_dir: str = 'dataset',
                  output_dir: str = 'output',
                  hf_token_env: str = 'HUGGINGFACE_HUB_TOKEN'):
         self.model_name = model_name
-        self.fallback_model_name = fallback_model_name
         self.dataset_dir = dataset_dir
         self.output_dir = output_dir
         self.hf_token = os.environ.get(hf_token_env, None)
@@ -74,12 +72,12 @@ class ModelTrainer:
             return self._apply_lora(model)
 
         self.tokenizer = AutoTokenizer.from_pretrained(
-            self.fallback_model_name,
+            self.model_name,
             use_fast=True
         )
 
         model = AutoModelForCausalLM.from_pretrained(
-            self.fallback_model_name,
+            self.model_name,
             device_map='cpu',
             torch_dtype=torch.float32,
             low_cpu_mem_usage=True
