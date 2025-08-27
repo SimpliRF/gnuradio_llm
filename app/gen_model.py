@@ -20,7 +20,7 @@ def arg_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
-        '--model', default='Qwen/Qwen2.5-0.5B-Instruct', type=str,
+        '--model', default='Qwen/Qwen2-1.5B-Chat', type=str,
         help='The model name to load (set to output for tuned model)'
     )
     parser.add_argument(

@@ -17,11 +17,9 @@ from transformers.utils.quantization_config import BitsAndBytesConfig
 
 class ModelEngine:
     def __init__(self,
-                 model_name: str = 'mistralai/Mistral-7B-Instruct-v0.2',
-                 fallback_model_name: str = 'Qwen/Qwen2.5-0.5B-Instruct',
+                 model_name: str = 'Qwen/Qwen2-1.5B-Chat',
                  hf_token_env: str = 'HUGGINGFACE_HUB_TOKEN'):
         self.model_name = model_name
-        self.fallback_model_name = fallback_model_name
         self.hf_token = os.environ.get(hf_token_env, None)
 
         self._load_model()
@@ -44,14 +42,14 @@ class ModelEngine:
                 quantization_config=self.config
             )
         else:
-            offload_dir = Path.home() / '.cache' / 'gr_llm_offload'
+            offload_dir = Path.home() / '.cache' / 'gnuradio_llm_offload'
             offload_dir.mkdir(parents=True, exist_ok=True)
             self.tokenizer = AutoTokenizer.from_pretrained(
-                self.fallback_model_name,
+                self.model_name,
                 use_fast=True
             )
             self.model = AutoModelForCausalLM.from_pretrained(
-                self.fallback_model_name,
+                self.model_name,
                 device_map='cpu',
                 offload_folder=str(offload_dir),
                 torch_dtype=torch.float32,

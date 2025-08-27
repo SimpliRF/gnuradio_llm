@@ -43,11 +43,7 @@ class ModelTrainer:
                 'v_proj',
                 'k_proj',
                 'o_proj',
-                'gate_proj',
-                'up_proj',
-                'down_proj',
             ],
-            use_rslora=True,
         )
         return get_peft_model(model, self.peft_config)
 
@@ -101,10 +97,9 @@ class ModelTrainer:
         return format_batch
 
     def train(self,
-              window_size: int = 1,
               max_seq_length: int = 4096,
               learning_rate: float = 2e-4,
-              num_train_epochs: int = 5):
+              num_train_epochs: int = 10):
 
         dataset = load_dataset(self.dataset_dir)
 
@@ -112,7 +107,7 @@ class ModelTrainer:
             config = SFTConfig(
                 output_dir=self.output_dir,
                 max_seq_length=max_seq_length,
-                per_device_train_batch_size=2,
+                per_device_train_batch_size=1,
                 gradient_accumulation_steps=4,
                 num_train_epochs=num_train_epochs,
                 learning_rate=learning_rate,
@@ -125,7 +120,7 @@ class ModelTrainer:
                 output_dir=self.output_dir,
                 max_seq_length=max_seq_length,
                 per_device_train_batch_size=1,
-                gradient_accumulation_steps=2,
+                gradient_accumulation_steps=8,
                 num_train_epochs=num_train_epochs,
                 learning_rate=learning_rate,
                 fp16=False,
