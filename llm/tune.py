@@ -37,7 +37,8 @@ class ModelTrainer:
         self.peft_config = LoraConfig(
             r=16,
             lora_alpha=32,
-            lora_dropout=0.0,
+            lora_dropout=0.05,
+            bias='none',
             task_type='CASUAL_LM',
             target_modules=[
                 'q_proj',
@@ -105,9 +106,9 @@ class ModelTrainer:
 
     def train(self,
               window_size: int = 1,
-              max_seq_length: int = 2048,
+              max_seq_length: int = 4096,
               learning_rate: float = 2e-4,
-              num_train_epochs: int = 10):
+              num_train_epochs: int = 5):
 
         dataset = load_dataset(
             dataset_dir=self.dataset_dir,
@@ -122,13 +123,11 @@ class ModelTrainer:
                 gradient_accumulation_steps=4,
                 num_train_epochs=num_train_epochs,
                 learning_rate=learning_rate,
-                lr_scheduler_type='cosine',
                 fp16=True,
                 warmup_ratio=0.0,
                 weight_decay=0.0,
                 logging_steps=10,
                 save_steps=100,
-                packing=True
             )
         else:
             config = SFTConfig(
@@ -138,13 +137,11 @@ class ModelTrainer:
                 gradient_accumulation_steps=1,
                 num_train_epochs=num_train_epochs,
                 learning_rate=learning_rate,
-                lr_scheduler_type='cosine',
                 fp16=False,
                 warmup_ratio=0.0,
                 weight_decay=0.0,
                 logging_steps=10,
                 save_steps=100,
-                packing=True
             )
 
         trainer = SFTTrainer(

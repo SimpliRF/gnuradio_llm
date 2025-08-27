@@ -69,7 +69,7 @@ class ModelEngine:
     def generate(self,
                  user_prompt: str,
                  flowgraph_json: Optional[str] = None,
-                 max_tokens: int = 2048) -> str:
+                 max_tokens: int = 4096) -> str:
         prompt = build_prompt(
             tokenizer=self.tokenizer,
             user_prompt=user_prompt,
@@ -112,7 +112,7 @@ class ModelEngine:
     def retry_with_feedback(self,
                             user_prompt: str,
                             feedback: str,
-                            max_tokens: int = 2048) -> str:
+                            max_tokens: int = 4096) -> str:
         retry_prompt = (
             f'The previous attempt failed with the following feedback:\n{feedback}\n'
             f'Please try again and produce the correct JSON.\n\n'

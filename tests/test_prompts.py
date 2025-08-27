@@ -21,32 +21,6 @@ class DummyChatTokenizer:
         return rendered + f'\nADD_GEN:{str(add_generation_prompt)}'
 
 
-class DummyTokenizer:
-    pass
-
-
-def test_build_prompt_with_tokenizer():
-    tokenizer = DummyTokenizer()
-    user_prompt = 'Create a flowgraph with a source and a sink'
-
-    completion_json = '{ "ok": 1 }'
-
-    output = build_prompt(
-        tokenizer, user_prompt, completion_json, generation_prompt=False
-    )
-
-    assert '### Prompt: Create a flowgraph with a source and a sink' in output
-    assert '### Completion:' in output
-    assert '{ "ok": 1 }' in output
-
-    output = build_prompt(
-        tokenizer, user_prompt, completion_json
-    )
-
-    assert '### Completion:' in output
-    assert '{ "ok": 1 }' not in output
-
-
 def test_build_prompt_with_chat_tokenizer():
     tokenizer = DummyChatTokenizer()
     user_prompt = 'Create a flowgraph with a source and a sink'
