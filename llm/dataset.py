@@ -21,8 +21,7 @@ def decode_completion(completion_json: str) -> str:
     return json.dumps(completion, separators=(',', ':'))
 
 
-def load_dataset_jsonl(dataset_dir: str,
-                       window_size: int = 3) -> Iterator[Dict[str, Any]]:
+def load_dataset_jsonl(dataset_dir: str) -> Iterator[Dict[str, Any]]:
     for filename in os.listdir(dataset_dir):
         if not filename.endswith('.jsonl'):
             continue
@@ -47,27 +46,19 @@ def load_dataset_jsonl(dataset_dir: str,
                         'completion': decode_completion(r['completion']),
                     })
 
-                L = len(history)
-                if L < window_size:
-                    yield {'history': history}
-                    continue
-
                 i = 0
-                while i + window_size <= L:
-                    window = history[i:i + window_size]
-                    yield {'history': window}
+                while i + 1 <= len(history):
+                    yield history[i]
                     i += 1
 
 
-def load_dataset(dataset_dir: str,
-                 cache_dir: str = 'dataset_cache',
-                 window_size: int = 1) -> Dataset:
+def load_dataset(dataset_dir: str, cache_dir: str = 'dataset_cache') -> Dataset:
     """
     Load the dataset from the specified directory.
     """
     dataset = Dataset.from_generator(
         load_dataset_jsonl,
-        gen_kwargs={'dataset_dir': dataset_dir, 'window_size': window_size},
+        gen_kwargs={'dataset_dir': dataset_dir},
         cache_dir=cache_dir,
         keep_in_memory=False
     )

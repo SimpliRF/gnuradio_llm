@@ -14,7 +14,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers.utils.quantization_config import BitsAndBytesConfig
 from trl import SFTTrainer, SFTConfig
 
-from llm.prompts import build_chained_prompt
+from llm.prompts import build_prompt
 from llm.dataset import load_dataset
 
 
@@ -35,9 +35,9 @@ class ModelTrainer:
 
     def _apply_lora(self, model) -> Any:
         self.peft_config = LoraConfig(
-            r=16,
-            lora_alpha=32,
-            lora_dropout=0.05,
+            r=8,
+            lora_alpha=16,
+            lora_dropout=0.1,
             bias='none',
             task_type='CASUAL_LM',
             target_modules=[
@@ -49,6 +49,7 @@ class ModelTrainer:
                 'up_proj',
                 'down_proj',
             ],
+            use_rslora=True,
         )
         return get_peft_model(model, self.peft_config)
 
@@ -89,19 +90,16 @@ class ModelTrainer:
     @staticmethod
     def _make_formatting_func(tokenizer):
         def format_batch(batch):
-            prompt_list = []
-            for chain in batch['history']:
-                pairs = [
-                    (pair['prompt'], pair['context'], pair['completion'])
-                    for pair in chain
-                ]
-                prompt = build_chained_prompt(
-                    tokenizer,
-                    pairs,
-                    generation_prompt=False
-                )
-                prompt_list.append(prompt)
-            return prompt_list
+            prompts = batch['prompt']
+            contexts = batch['context']
+            completions = batch['completion']
+
+            result = []
+            for p, ctx, comp in zip(prompts, contexts, completions):
+                prompt = build_prompt(tokenizer, p, ctx, comp)
+                result.append(prompt)
+            return result
+
         return format_batch
 
     def train(self,
@@ -110,10 +108,7 @@ class ModelTrainer:
               learning_rate: float = 2e-4,
               num_train_epochs: int = 5):
 
-        dataset = load_dataset(
-            dataset_dir=self.dataset_dir,
-            window_size=window_size
-        )
+        dataset = load_dataset(self.dataset_dir)
 
         if torch.cuda.is_available():
             config = SFTConfig(
@@ -124,8 +119,6 @@ class ModelTrainer:
                 num_train_epochs=num_train_epochs,
                 learning_rate=learning_rate,
                 fp16=True,
-                warmup_ratio=0.0,
-                weight_decay=0.0,
                 logging_steps=10,
                 save_steps=100,
             )
@@ -134,12 +127,10 @@ class ModelTrainer:
                 output_dir=self.output_dir,
                 max_seq_length=max_seq_length,
                 per_device_train_batch_size=1,
-                gradient_accumulation_steps=1,
+                gradient_accumulation_steps=2,
                 num_train_epochs=num_train_epochs,
                 learning_rate=learning_rate,
                 fp16=False,
-                warmup_ratio=0.0,
-                weight_decay=0.0,
                 logging_steps=10,
                 save_steps=100,
             )

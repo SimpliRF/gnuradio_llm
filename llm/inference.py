@@ -73,8 +73,7 @@ class ModelEngine:
         prompt = build_prompt(
             tokenizer=self.tokenizer,
             user_prompt=user_prompt,
-            generation_prompt=True,
-            flowgraph_json=flowgraph_json
+            context_json=flowgraph_json
         )
         inputs = self.tokenizer(
             prompt,
@@ -94,8 +93,8 @@ class ModelEngine:
             **inputs,
             max_new_tokens=max_tokens,
             do_sample=False,
-            num_beams=1,
-            early_stopping=False,
+            num_beams=4,
+            early_stopping=True,
             eos_token_id=list(eos_ids),
             pad_token_id=self.tokenizer.pad_token_id,
             use_cache=True,

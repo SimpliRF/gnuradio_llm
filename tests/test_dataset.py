@@ -15,21 +15,20 @@ def test_load_dataset_jsonl():
     assert isinstance(dataset, Iterator)
 
     first_item = next(dataset)
-    assert 'history' in first_item
-    assert isinstance(first_item['history'], list)
+    assert isinstance(first_item, dict)
+    assert 'prompt' in first_item
+    assert 'completion' in first_item
+    assert 'context' in first_item
 
 
 def test_load_dataset():
     dataset = load_dataset('tests/mock_datasets')
 
     assert len(dataset) == 1
-    assert 'history' in dataset[0]
+    assert 'prompt' in dataset[0]
+    assert 'completion' in dataset[0]
+    assert 'context' in dataset[0]
 
-    chain = dataset[0]['history']
-    pair = chain[0]
-    assert 'prompt' in pair
-    assert 'completion' in pair
-
-    assert 'generate a null sink' in pair['prompt']
-    assert '"blocks":[' in pair['completion']
-    assert '"connections":[' in pair['completion']
+    assert 'generate a null sink' in dataset[0]['prompt']
+    assert '"blocks":[' in dataset[0]['completion']
+    assert '"connections":[' in dataset[0]['completion']

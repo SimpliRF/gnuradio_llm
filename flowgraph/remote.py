@@ -12,7 +12,7 @@ import PyQt5.QtCore as QtCore
 from flowgraph.loader import load_top_block
 
 
-class RemoteController:
+class RemoteTopBlock:
     def __init__(self, generated_path: Path, connection: connection.Connection):
         self.generated_path = generated_path
         self.connection = connection
@@ -23,8 +23,8 @@ class RemoteController:
 
     @staticmethod
     def entry_point(generated_path: Path, connection: connection.Connection):
-        remote_controller = RemoteController(generated_path, connection)
-        remote_controller.main()
+        remote_top_block = RemoteTopBlock(generated_path, connection)
+        remote_top_block.main()
 
     def _poll_timer(self):
         timer = QtCore.QTimer()

@@ -1,3 +1,4 @@
+# type: ignore
 #
 # This file is part of the GNU Radio LLM project.
 #
@@ -9,7 +10,12 @@ from pathlib import Path
 
 from typing import Any, Tuple, Type
 
+from gnuradio import gr
 from gnuradio.gr.top_block import top_block
+from gnuradio.grc.core.platform import Platform
+from gnuradio.grc.core.generator.top_block import TopBlockGenerator
+
+from flowgraph.schema import Flowgraph
 
 
 def load_top_block(path: Path) -> Tuple[Any, Type[top_block]]:
@@ -36,3 +42,27 @@ def load_top_block(path: Path) -> Tuple[Any, Type[top_block]]:
         raise ValueError('Could not infer top_block class from main signature')
 
     return (main_func, top_block_cls)
+
+
+def generate_flowgraph(flowgraph: Flowgraph) -> Path:
+    platform = Platform(
+        version=gr.version(),
+        version_parts=(
+            gr.major_version(),
+            gr.api_version(),
+            gr.minor_version()),
+        prefs=gr.prefs(),
+        install_prefix=gr.prefix()
+    )
+    platform.build_library()
+    grc_flowgraph = platform.make_flow_graph()
+    grc_flowgraph.import_data(flowgraph.model_dump())
+    grc_flowgraph.rewrite()
+    grc_flowgraph.validate()
+
+    if not grc_flowgraph.is_valid():
+        raise ValueError('Invalid flowgraph')
+
+    generator = TopBlockGenerator(grc_flowgraph, tempfile.gettempdir())
+    generator.write()
+    return Path(generator.file_path)
