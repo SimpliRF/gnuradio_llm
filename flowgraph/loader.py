@@ -4,6 +4,7 @@
 #
 
 import inspect
+import tempfile
 
 from importlib.util import spec_from_file_location, module_from_spec
 from pathlib import Path

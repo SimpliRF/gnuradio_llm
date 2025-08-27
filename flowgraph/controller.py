@@ -2,96 +2,108 @@
 # This file is part of the GNU Radio LLM project.
 #
 
-import time
+import multiprocessing as mp
 
-from typing import Optional
+from multiprocessing import connection
+
+from pathlib import Path
 from rich.console import Console
-from flowgraph.runner import FlowgraphRunner
+
 from flowgraph.schema import Flowgraph, FlowgraphAction
+from flowgraph.loader import generate_flowgraph
+from flowgraph.remote import RemoteTopBlock
 
 
 class FlowgraphController:
     def __init__(self, console: Console):
         self.console = console
-        self.runner: Optional[FlowgraphRunner] = None
-        self.flowgraph: Optional[Flowgraph] = None
-        self.state: str = 'idle'
-        self.start_time: Optional[float] = None
+        self.generated_path = None
+
+        self.process = None
+        self.parent_conn = None
+        self.child_conn = None
+        self.state = 'idle'
 
     def load_flowgraph(self, flowgraph: Flowgraph):
-        """
-        Load and validate a flowgraph from JSON or LLM output.
-        """
-        self.flowgraph = flowgraph
-        self.runner = FlowgraphRunner(flowgraph, self.console)
+        self.generated_path = generate_flowgraph(flowgraph)
         self.state = 'loaded'
+        self.console.print('🔧 Flowgraph loaded.')
+
+    def _start_process(self):
+        self.parent_conn, self.child_conn = mp.Pipe()
+        self.process = mp.Process(
+            target=RemoteTopBlock.entry_point,
+            args=(self.generated_path, self.child_conn)
+        )
+        self.process.start()
+
+        response = self.parent_conn.recv()
+        if response.get('type') != 'status' or response.get('msg') != 'ready':
+            raise RuntimeError(f'Failed to start remote process: {response}')
+
+    def _send(self, msg: dict):
+        if not self.parent_conn:
+            raise RuntimeError('No connection to remote process.')
+        self.parent_conn.send(msg)
+
+        response_codes = ('started', 'stopped', 'set', 'get')
+        response = self.parent_conn.recv()
+        if response.get('type') == 'error':
+            raise RuntimeError(response.get('err'))
+        elif response.get('type') in response_codes:
+            return response
+        return response
 
     def start(self):
-        if not self.runner:
-            raise RuntimeError('FlowgraphRunner is not loaded.')
         if self.state == 'running':
             self.console.print('⚠️ Flowgraph is already running.')
+            return
 
-        self.runner.start()
+        if self.state != 'loaded':
+            self.console.print('⚠️ Flowgraph is not loaded.')
+            return
+
+        if not self.generated_path:
+            raise RuntimeError('No flowgraph loaded.')
+
+        self._start_process()
+        self._send({'type': 'start'})
         self.state = 'running'
-        self.start_time = time.time()
         self.console.print('▶️ Flowgraph started.')
 
     def stop(self):
-        if self.runner and self.state == 'running':
-            self.runner.stop()
-            self.state = 'stopped'
-            self.console.print('⏹️ Flowgraph stopped.')
+        if self.state != 'running':
+            self.console.print('⚠️ Flowgraph is not running.')
+            return
 
-    def status(self) -> str:
-        if not self.runner:
-            return 'No flowgraph loaded.'
-        duration = time.time() - self.start_time if self.start_time else 0
-        return f'State: {self.state} | Uptime: {duration:.2f} seconds'
+        if self.process is None:
+            raise RuntimeError('No process to stop.')
 
-    def reset(self):
-        if self.runner and self.state == 'running':
-            self.stop()
+        self._send({'type': 'stop'})
+        self.process.join(timeout=5)
+        if self.process.is_alive():
+            self.process.terminate()
 
-        self.runner = None
-        self.flowgraph = None
         self.state = 'idle'
-        self.start_time = None
-        self.console.print('🔄 Flowgraph reset...')
+        self.console.print('⏹️ Flowgraph stopped.')
 
-    def handle_action(self, action: FlowgraphAction) -> str:
-        if not self.runner:
-            return 'No flowgraph loaded'
-
+    def handle_action(self, action: FlowgraphAction):
         if action.action == 'start':
             self.start()
-            return 'Flowgraph has started'
-
         elif action.action == 'stop':
             self.stop()
-            return 'Flowgraph has stopped'
-
         elif action.action == 'block_set':
-            if action.method is None:
-                return 'Missing method for set action'
-
-            if action.value is None:
-                return 'Missing value for set action'
-
-            method = getattr(self.runner.tb, action.method, None)
-            if callable(method):
-                method(action.value)
-                return f'Successfully set: {action.method} = {action.value}'
-            return f'Setter method {action.method} not found'
-
+            self._send({
+                'type': 'set',
+                'method': action.method,
+                'value': action.value
+            })
+            self.console.print(f'🔧 Set {action.method} to {action.value}')
         elif action.action == 'block_get':
-            if action.method is None:
-                return 'Missing method for get action'
-
-            method = getattr(self.runner.tb, action.method, None)
-            if callable(method):
-                value = method()
-                return f'Successfully retrieved: {action.method} = {value}'
-            return f'Getter method {action.method} not found'
-
-        raise ValueError(f'Unsupported action: {action.action}')
+            result = self._send({
+                'type': 'get',
+                'method': action.method
+            })
+            self.console.print(f'🔍 Get {action.method}: {result}')
+        else:
+            raise ValueError(f'Unknown action: {action.action}')

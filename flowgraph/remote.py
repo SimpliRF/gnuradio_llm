@@ -7,7 +7,7 @@ from multiprocessing import connection
 from typing import Dict, Any
 from pathlib import Path
 
-import PyQt5.QtCore as QtCore
+from PyQt5 import Qt, QtCore # type: ignore
 
 from flowgraph.loader import load_top_block
 
@@ -16,7 +16,8 @@ class RemoteTopBlock:
     def __init__(self, generated_path: Path, connection: connection.Connection):
         self.generated_path = generated_path
         self.connection = connection
-        self.app = QtCore.QApplication([])
+        self.app = Qt.QApplication([])
+        self.timer = QtCore.QTimer()
 
         tb_cls = self._load_tb_cls()
         self.tb = tb_cls()
@@ -27,19 +28,17 @@ class RemoteTopBlock:
         remote_top_block.main()
 
     def _poll_timer(self):
-        timer = QtCore.QTimer()
-        timer.setInterval(30)
+        self.timer.setInterval(30)
         def poll():
             try:
-                while self.connection and self.connection.poll():
+                if self.connection and self.connection.poll():
                     command = self.connection.recv()
                     self._handle_command(command)
             except (EOFError, BrokenPipeError):
                 self.connection.close()
                 self.app.quit()
-        timer.timeout.connect(poll)
-        timer.start()
-        return timer
+        self.timer.timeout.connect(poll)
+        self.timer.start()
 
     def _load_tb_cls(self):
         _, tb_cls = load_top_block(self.generated_path)
@@ -67,6 +66,11 @@ class RemoteTopBlock:
                         'method': cmd['method'],
                         'value': cmd['value']
                     })
+                else:
+                    self._send({
+                        'type': 'error',
+                        'err': f'Unknown method: {cmd["method"]}'
+                    })
             elif command_type == 'get':
                 method = getattr(self.tb, cmd['method'], None)
                 if callable(method):
@@ -75,6 +79,11 @@ class RemoteTopBlock:
                         'type': 'get',
                         'method': cmd['method'],
                         'result': str(result)
+                    })
+                else:
+                    self._send({
+                        'type': 'error',
+                        'err': f'Unknown method: {cmd["method"]}'
                     })
             else:
                 self._send({
@@ -90,7 +99,6 @@ class RemoteTopBlock:
     def main(self):
         self._poll_timer()
         self._send({'type': 'status', 'msg': 'ready'})
-
         try:
             self.app.exec()
         finally:
