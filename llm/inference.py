@@ -17,11 +17,8 @@ from transformers.utils.quantization_config import BitsAndBytesConfig
 
 class ModelEngine:
     def __init__(self,
-                 model_name: str = 'Qwen/Qwen2-1.5B-Chat',
-                 hf_token_env: str = 'HUGGINGFACE_HUB_TOKEN'):
+                 model_name: str = 'Qwen/Qwen2.5-Coder-1.5B-Instruct'):
         self.model_name = model_name
-        self.hf_token = os.environ.get(hf_token_env, None)
-
         self._load_model()
 
     def _load_model(self):
@@ -67,7 +64,7 @@ class ModelEngine:
     def generate(self,
                  user_prompt: str,
                  flowgraph_json: Optional[str] = None,
-                 max_tokens: int = 4096) -> str:
+                 max_tokens: int = 2048) -> str:
         prompt = build_prompt(
             tokenizer=self.tokenizer,
             user_prompt=user_prompt,
@@ -91,8 +88,8 @@ class ModelEngine:
             **inputs,
             max_new_tokens=max_tokens,
             do_sample=False,
-            num_beams=4,
-            early_stopping=True,
+            num_beams=1,
+            early_stopping=False,
             eos_token_id=list(eos_ids),
             pad_token_id=self.tokenizer.pad_token_id,
             use_cache=True,
@@ -109,10 +106,15 @@ class ModelEngine:
     def retry_with_feedback(self,
                             user_prompt: str,
                             feedback: str,
-                            max_tokens: int = 4096) -> str:
+                            flowgraph_json: Optional[str] = None,
+                            max_tokens: int = 2048) -> str:
         retry_prompt = (
             f'The previous attempt failed with the following feedback:\n{feedback}\n'
-            f'Please try again and produce the correct JSON.\n\n'
-            f'Original user prompt: {user_prompt}\n\n'
+            f'Please try again and correct the error.\n\n'
+            f'Original prompt: {user_prompt}\n\n'
         )
-        return self.generate(retry_prompt, max_tokens=max_tokens)
+        return self.generate(
+            retry_prompt,
+            flowgraph_json=flowgraph_json,
+            max_tokens=max_tokens
+        )

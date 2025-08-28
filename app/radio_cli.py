@@ -121,13 +121,13 @@ def main_entry() -> int:
                 # Try to parse the output as a flowgraph
                 try:
                     flowgraph = Flowgraph.model_validate_json(response)
-
-                    current_flowgraph = response
-
-                    console.print('[bold green]✔ Flowgraph successfully built![/bold green]')
                     console.print('[dim]Generated JSON:[/dim]')
                     console.print_json(response)
 
+                    controller.load_flowgraph(flowgraph)
+                    current_flowgraph = response
+
+                    console.print('[bold green]✔ Flowgraph successfully built![/bold green]')
                     if args.tree:
                         draw_flowgraph_tree(console, flowgraph)
                     else:
@@ -150,7 +150,9 @@ def main_entry() -> int:
                 console.print(f'[bold red]❌ Error processing response:[/bold red] {e}')
                 if attempt < args.max_attempts - 1:
                     console.print('[yellow]Retrying with feedback...[/yellow]')
-                    response = engine.retry_with_feedback(user_input, str(e))
+                    response = engine.retry_with_feedback(
+                        user_input, str(e), current_flowgraph
+                    )
                     console.print(f'[bold blue]LLM Response:[/bold blue]\n{response}')
                 else:
                     console.print('[bold red]❌ Max attempts reached...[/bold red]')

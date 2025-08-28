@@ -61,9 +61,6 @@ def generate_flowgraph(flowgraph: Flowgraph) -> Path:
     grc_flowgraph.rewrite()
     grc_flowgraph.validate()
 
-    if not grc_flowgraph.is_valid():
-        raise ValueError('Invalid flowgraph')
-
     generator = TopBlockGenerator(grc_flowgraph, tempfile.gettempdir())
     generator.write()
     return Path(generator.file_path)

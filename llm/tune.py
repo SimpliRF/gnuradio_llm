@@ -8,7 +8,7 @@ import torch
 
 from typing import Any
 
-from peft import LoraConfig # type: ignore
+from peft import LoraConfig, prepare_model_for_kbit_training # type: ignore
 from peft.mapping import get_peft_model
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers.utils.quantization_config import BitsAndBytesConfig
@@ -20,7 +20,7 @@ from llm.dataset import load_dataset
 
 class ModelTrainer:
     def __init__(self,
-                 model_name: str = 'Qwen/Qwen2-1.5B-Chat',
+                 model_name: str = 'Qwen/Qwen2.5-Coder-1.5B-Instruct',
                  dataset_dir: str = 'dataset',
                  output_dir: str = 'output',
                  hf_token_env: str = 'HUGGINGFACE_HUB_TOKEN'):
@@ -35,15 +35,16 @@ class ModelTrainer:
         self.peft_config = LoraConfig(
             r=8,
             lora_alpha=16,
-            lora_dropout=0.1,
+            lora_dropout=0.05,
             bias='none',
-            task_type='CASUAL_LM',
+            task_type='CAUSAL_LM',
             target_modules=[
                 'q_proj',
                 'v_proj',
                 'k_proj',
                 'o_proj',
             ],
+            use_rslora=True,
         )
         return get_peft_model(model, self.peft_config)
 
@@ -62,9 +63,13 @@ class ModelTrainer:
             model = AutoModelForCausalLM.from_pretrained(
                 self.model_name,
                 device_map='auto',
-                quantization_config=config
+                quantization_config=config,
+                low_cpu_mem_usage=True
             )
             model.config.use_cache = False
+            model = prepare_model_for_kbit_training(
+                model, use_gradient_checkpointing=True
+            )
             return self._apply_lora(model)
 
         self.tokenizer = AutoTokenizer.from_pretrained(
@@ -97,9 +102,9 @@ class ModelTrainer:
         return format_batch
 
     def train(self,
-              max_seq_length: int = 4096,
+              max_seq_length: int = 2048,
               learning_rate: float = 2e-4,
-              num_train_epochs: int = 10):
+              num_train_epochs: int = 5):
 
         dataset = load_dataset(self.dataset_dir)
 
@@ -108,7 +113,7 @@ class ModelTrainer:
                 output_dir=self.output_dir,
                 max_seq_length=max_seq_length,
                 per_device_train_batch_size=1,
-                gradient_accumulation_steps=4,
+                gradient_accumulation_steps=8,
                 num_train_epochs=num_train_epochs,
                 learning_rate=learning_rate,
                 fp16=True,
