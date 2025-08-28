@@ -1,7 +1,8 @@
 # GNU Radio Large Language Model (LLM)
 
 This project provides an LLM pipeline for quickly adding examples and re-tune
-the foundation model of choice using LoRA (Low-Rank Adaptation of LLMs).
+a foundation model of choice using LoRA (Low-Rank Adaptation of LLMs).
+Thus far only Qwen models have been tested for compability.
 
 The project also includes a dataset logger for GNU Radio Companion (GRC)
 for emitting history-style training examples. GRC is often used for
