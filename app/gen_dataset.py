@@ -8,6 +8,8 @@ import argparse
 
 from pathlib import Path
 
+from rich.console import Console
+
 from dataset_generation.transform import build_datasets
 
 
@@ -32,7 +34,17 @@ def main_entry():
     parser = arg_parser()
     args = parser.parse_args()
 
+    console = Console()
+    console.print('[bold yellow]🔄 Dataset generation activated...[/bold yellow]')
+
     build_datasets(args.traces, args.dataset)
+
+    console.print('[bold green]✔ Dataset generation completed successfully![/bold green]')
+    console.print('[dim]Generated dataset files:[/dim]')
+    for file in args.dataset.glob('**/*.jsonl'):
+        if file.is_file():
+            console.print(f' - {args.dataset}/{file.relative_to(args.dataset)}')
+
     return 0
 
 

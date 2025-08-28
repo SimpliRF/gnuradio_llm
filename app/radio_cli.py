@@ -134,15 +134,20 @@ def main_entry() -> int:
                         draw_flowgraph_table(console, flowgraph)
                     break
                 except ValidationError:
-                    console.print('[bold red]Must not be a flowgraph JSON[/bold red]')
+                    console.print('[bold yellow]Must not be a flowgraph JSON[/bold yellow]')
 
                 # Try to parse the output as a flowgraph action
                 try:
                     action = FlowgraphAction.model_validate_json(response)
+                    console.print('[dim]Generated JSON:[/dim]')
+                    console.print_json(response)
+
+                    controller.handle_action(action)
+
                     console.print('[green]✔ Action executed[/green]')
                     break
                 except ValidationError:
-                    console.print(f'[bold red]Must not be a flowgraph action[/bold red]')
+                    pass
 
                 raise ValueError('Invalid response format from LLM...')
 
