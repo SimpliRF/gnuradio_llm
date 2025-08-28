@@ -22,12 +22,10 @@ class ModelTrainer:
     def __init__(self,
                  model_name: str = 'Qwen/Qwen2.5-Coder-1.5B-Instruct',
                  dataset_dir: str = 'dataset',
-                 output_dir: str = 'output',
-                 hf_token_env: str = 'HUGGINGFACE_HUB_TOKEN'):
+                 output_dir: str = 'output'):
         self.model_name = model_name
         self.dataset_dir = dataset_dir
         self.output_dir = output_dir
-        self.hf_token = os.environ.get(hf_token_env, None)
 
         self.model = self._load_model()
 

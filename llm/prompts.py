@@ -29,7 +29,7 @@ def build_prompt(tokenizer,
     if context_json:
         system_prompt += f'Here is the current flowgraph:\n{context_json}\n\n'
 
-    messages.append({'role': 'system', 'content': system_prompt}) 
+    messages.append({'role': 'system', 'content': system_prompt})
     messages.append({'role': 'user', 'content': user_prompt + '\n'})
 
     if completion_json:

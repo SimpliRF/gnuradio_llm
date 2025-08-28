@@ -39,7 +39,7 @@ def load_dataset_jsonl(dataset_dir: str) -> Iterator[Dict[str, Any]]:
                 for r in data:
                     context = r.get('context', '')
                     if len(context):
-                        context = decode_completion(r['context'])
+                        context = decode_completion(context)
                     history.append({
                         'prompt': r['prompt'],
                         'context': context,
