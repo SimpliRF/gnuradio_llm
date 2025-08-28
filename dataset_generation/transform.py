@@ -118,9 +118,13 @@ def build_datasets(trace_dir: Path, dataset_dir: Path):
 
                 entry = json.loads(line)
                 actions = normalize_runtime_entry(line)
+                flowgraph = Flowgraph(**entry['snapshot'])
+                flowgraph = minimize_flowgraph(flowgraph)
+
                 for action in actions:
                     history.append({
                         'prompt': generate_prompt(action),
+                        'context': encode_completion(flowgraph),
                         'completion': encode_completion(action)
                     })
         if history:

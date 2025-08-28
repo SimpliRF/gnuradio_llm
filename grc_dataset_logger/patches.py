@@ -2,6 +2,8 @@
 # This file is part of the GNU Radio LLM project.
 #
 
+import json
+import base64
 import functools
 
 from typing import Type
@@ -40,14 +42,20 @@ def patch_flowgraph(logger: FlowgraphLogger):
     """
     This function patches selected methods in GRC's flowgraph model.
     """
-    def on_flowgraph_change(self, method, args, kwargs, result):
+    def on_flowgraph_change(flowgraph, method, args, kwargs, result):
         if method == 'get_run_command':
             if isinstance(result, str):
                 script_path = result.split(' ')[-1]
+                flowgraph_data = flowgraph.export_data()
+                flowgraph_json = json.dumps(flowgraph_data)
+                flowgraph_json = base64.b64encode(flowgraph_json.encode()).decode()
                 wrapped = (f'python -c "from grc_dataset_logger.launch_top_block '
-                           f'import execute_script; execute_script(\'{script_path}\')"')
+                           f'import execute_script; from collections '
+                           f'import OrderedDict; '
+                           f'execute_script(\'{script_path}\', '
+                           f'\'{flowgraph_json}\')"')
                 return wrapped
-        logger.on_flowgraph_change(self, method, args, kwargs)
+        logger.on_flowgraph_change(flowgraph, method, args, kwargs)
         return None
 
     for method in GRC_FLOWGRAPH_METHODS:

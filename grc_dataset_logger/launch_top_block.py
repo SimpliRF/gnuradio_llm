@@ -3,7 +3,8 @@
 # This file is part of the GNU Radio LLM project.
 #
 
-import sys
+import json
+import base64
 
 from pathlib import Path
 
@@ -17,7 +18,12 @@ from grc_dataset_logger.patches import patch_top_block
 ACTION_LOGGER = RuntimeLogger(Config())
 
 
-def execute_script(script_path: Path):
+def execute_script(script_path: Path, flowgraph_json: str):
+    flowgraph_json = base64.b64decode(flowgraph_json).decode()
+    flowgraph_data = json.loads(flowgraph_json)
+
+    ACTION_LOGGER.load_flowgraph(flowgraph_data)
+
     main_func, top_block_cls = load_top_block(script_path)
 
     patch_top_block(top_block_cls, ACTION_LOGGER)
@@ -26,13 +32,3 @@ def execute_script(script_path: Path):
 
     ACTION_LOGGER.save_session()
     return result
-
-
-if __name__ == '__main__':
-    path = sys.argv[1] if len(sys.argv) > 1 else None
-    if not path:
-        print('Usage: python launch_top_block.py <path_to_top_block>')
-        sys.exit(1)
-
-    result = execute_script(Path(path))
-    sys.exit(result)

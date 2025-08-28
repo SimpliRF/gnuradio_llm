@@ -26,11 +26,16 @@ class RuntimeLogger:
         self.traces_dir = self.config.trace_dir / 'actions'
         self.traces_dir.mkdir(parents=True, exist_ok=True)
         self.traces_path = self.traces_dir / trace_file_name
+        self.flowgraph = {}
 
         self.traces = []
 
     def _timestamp(self) -> str:
         return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+    def load_flowgraph(self, flowgraph_data: dict):
+        with self.lock:
+            self.flowgraph = flowgraph_data
 
     @staticmethod
     def _sanitize_for_json(data):
@@ -50,6 +55,7 @@ class RuntimeLogger:
             self.traces.append({
                 'id': str(top_block.__class__.__name__),
                 'timestamp': self._timestamp(),
+                'snapshot': self.flowgraph,
                 'method': method,
                 'args': self._sanitize_for_json(args),
                 'kwargs': self._sanitize_for_json(kwargs),
