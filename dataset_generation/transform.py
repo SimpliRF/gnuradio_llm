@@ -26,32 +26,32 @@ def generate_prompt(action: Action) -> str:
     """
     match action:
         case _ if action.action == 'new_flowgraph':
-            return f'Create a new flowgraph with ID {action.flowgraph_id}'
+            return f'Create a new flowgraph with ID {action.flowgraph_id}.'
         case _ if action.action == 'add_block':
-            return f'Add a new block {action.block_id} to the flowgraph'
+            return f'Add a new block {action.block_id} to the flowgraph.'
         case _ if action.action == 'remove_block':
-            return f'Remove the block {action.block_id} from the flowgraph'
+            return f'Remove the block {action.block_id} from the flowgraph.'
         case _ if action.action == 'connect':
             return (f'Connect the block {action.src[0]} at '
                     f'port {action.src[1]} to {action.dst[0]} '
-                    f'at port {action.dst[1]}')
+                    f'at port {action.dst[1]}.')
         case _ if action.action == 'disconnect':
             return (f'Disconnect the block {action.src[0]} at '
                     f'port {action.src[1]} to {action.dst[0]} '
-                    f'at port {action.dst[1]}')
+                    f'at port {action.dst[1]}.')
         case _ if action.action == 'parameter':
             return (f'Set the parameter {action.parameter} of block '
-                    f'{action.block_id} to {action.value}')
+                    f'{action.block_id} to {action.value}.')
         case _ if action.action == 'set':
             return (f'Set the {action.method} method with the '
                     f'positional arguments: {action.args}, '
-                    f'and keyword arguments: {action.kwargs}')
+                    f'and keyword arguments: {action.kwargs}.')
         case _ if action.action == 'get':
             return (f'Get the {action.method} method with the '
                     f'positional arguments: {action.args}, '
-                    f'and keyword arguments: {action.kwargs}')
+                    f'and keyword arguments: {action.kwargs}.')
         case _:
-            return f'Perform the action {action.action}'
+            return f'Perform the action {action.action}.'
 
 
 def build_datasets(trace_dir: Path, dataset_dir: Path):
@@ -79,6 +79,8 @@ def build_datasets(trace_dir: Path, dataset_dir: Path):
 
                 entry = json.loads(line)
                 actions = normalize_flowgraph_entry(line)
+                if len(actions) == 0:
+                    continue
 
                 flowgraph_0_json = entry['snapshot_0']
                 flowgraph_0 = None
@@ -89,15 +91,19 @@ def build_datasets(trace_dir: Path, dataset_dir: Path):
                 flowgraph_1 = Flowgraph(**entry['snapshot_1'])
                 flowgraph_1 = minimize_flowgraph(flowgraph_1)
 
+                prompt = ''
                 for action in actions:
-                    context = ''
-                    if flowgraph_0:
-                        context = encode_completion(flowgraph_0)
-                    history.append({
-                        'prompt': generate_prompt(action),
-                        'context': context,
-                        'completion': encode_completion(flowgraph_1)
-                    })
+                    prompt += generate_prompt(action) + '\n'
+
+                context = ''
+                if flowgraph_0:
+                    context = encode_completion(flowgraph_0)
+
+                history.append({
+                    'prompt': prompt,
+                    'context': context,
+                    'completion': encode_completion(flowgraph_1)
+                })
 
         if history:
             flowgraphs_dataset.append(history)
