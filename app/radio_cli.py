@@ -7,7 +7,6 @@ import sys
 import argparse
 
 from rich.console import Console
-from rich.tree import Tree
 from rich.table import Table
 from rich.panel import Panel
 
@@ -19,26 +18,6 @@ from flowgraph.schema import Flowgraph, FlowgraphAction
 from flowgraph.controller import FlowgraphController
 
 from llm.inference import ModelEngine
-
-
-def draw_flowgraph_tree(console: Console, flowgraph: Flowgraph):
-    """
-    Draw a flowgraph tree in the console to display to the user.
-    """
-    parameters = flowgraph.options['parameters']
-    tree = Tree(f'[bold green]{parameters['id']}[/bold green]')
-
-    block_map = {b['id']: b for b in flowgraph.blocks}
-    for conn in flowgraph.connections:
-        src_id = conn[0]
-        dst_id = conn[2]
-        src_block = block_map.get(src_id)
-        dst_block = block_map.get(dst_id)
-        if src_block and dst_block:
-            node = tree.add(f'[cyan]{src_id}[/cyan] → [magenta]{dst_id}[/magenta]')
-            node.add(f'{src_block['name']} → {dst_block['name']}')
-
-    console.print(Panel(tree))
 
 
 def draw_flowgraph_table(console: Console, flowgraph: Flowgraph):
@@ -69,10 +48,6 @@ def arg_parser() -> argparse.ArgumentParser:
         description='GNU Radio LLM - Inference and training CLI'
     )
 
-    parser.add_argument(
-        '--tree', action='store_true',
-        help='Show flowgraph tree instead of table'
-    )
     parser.add_argument(
         '--max-attempts', default=3, type=int,
         help='Maximum number of attempts for generating a valid response'
@@ -128,10 +103,9 @@ def main_entry() -> int:
                     current_flowgraph = response
 
                     console.print('[bold green]✔ Flowgraph successfully built![/bold green]')
-                    if args.tree:
-                        draw_flowgraph_tree(console, flowgraph)
-                    else:
-                        draw_flowgraph_table(console, flowgraph)
+
+                    draw_flowgraph_table(console, flowgraph)
+
                     break
                 except ValidationError:
                     console.print('[bold yellow]Must not be a flowgraph JSON[/bold yellow]')
