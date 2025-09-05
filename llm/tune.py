@@ -33,7 +33,7 @@ class ModelTrainer:
         self.peft_config = LoraConfig(
             r=8,
             lora_alpha=16,
-            lora_dropout=0.05,
+            lora_dropout=0.1,
             bias='none',
             task_type='CAUSAL_LM',
             target_modules=[
@@ -41,6 +41,9 @@ class ModelTrainer:
                 'v_proj',
                 'k_proj',
                 'o_proj',
+                'gate_proj',
+                'up_proj',
+                'down_proj'
             ],
             use_rslora=True,
         )
@@ -117,6 +120,7 @@ class ModelTrainer:
                 fp16=True,
                 logging_steps=10,
                 save_steps=100,
+                use_liger=True
             )
         else:
             config = SFTConfig(
@@ -137,6 +141,7 @@ class ModelTrainer:
             peft_config=self.peft_config,
             train_dataset=dataset,
             args=config,
+            packing=False,
         )
 
         trainer.train()
